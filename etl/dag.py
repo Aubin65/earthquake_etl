@@ -13,7 +13,7 @@ import requests  # noqa
 
 # Définition des fonctions de DAG
 @dag(schedule="@once", start_date=pendulum.datetime(2021, 1, 1, tz="UTC"), catchup=False, tags=["earthquake_dag"])
-def superheroes_etl():
+def earthquake_etl():
     """DAG global d'import des données des tremblement de terre depuis le fichier csv des données brutes vers la base de données MongoDB"""
 
     @task
@@ -64,7 +64,7 @@ def superheroes_etl():
         request: str = "https://earthquake.usgs.gov/fdsnws/event/1/query?",
         format: str = "geojson",
         starttime: str = "2024-11-01",
-    ) -> pd.DataFrame:
+    ) -> dict:
         """Tâche d'extraction de la donnée depuis l'API
 
         Parameters
@@ -84,8 +84,8 @@ def superheroes_etl():
 
         Returns
         -------
-        pd.DataFrame
-            DataFrame contenant les résultats de la requête API
+        dict
+            dictionnaire contenant les résultats de la requête API
         """
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
@@ -152,3 +152,22 @@ def superheroes_etl():
         """
 
         collection.insert_many(earthquakes_list)
+
+    # Extraction du client, de la db et de la collection concernée
+    client, db, collection = connect_mongo()
+
+    # Extraction des données brutes
+    raw_dict = extract(client=client, db=db, collection=collection)
+
+    # Transformation des données brutes pour ne garder que ce qui nous intéresse
+    transformed_dicts = transform(raw_dict)
+
+    # Chargement des données
+    load(earthquakes_list=transformed_dicts, collection=collection)
+
+    # Déconnexion du client
+    disconnect_mongo(client)
+
+
+# Lancement du DAG général
+earthquake_etl()
