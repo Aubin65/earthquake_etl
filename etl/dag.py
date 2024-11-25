@@ -46,7 +46,7 @@ def earthquake_etl():
         return client, db, collection
 
     @task
-    def disconnect_mongo(client: pymongo.MongoClient):
+    def disconnect_mongo(client: pymongo.MongoClient) -> None:
         """Déconnexion du client MongoDB
 
         Parameters
