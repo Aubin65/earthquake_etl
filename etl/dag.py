@@ -6,6 +6,7 @@ Ce fichier est utilisé pour mettre en place l'ETL grâce à Apache Airflow
 from airflow.decorators import dag, task
 import pendulum
 import pymongo
+import pymongo.collection
 import requests
 
 
@@ -140,7 +141,7 @@ def earthquake_etl():
         return earthquakes_list
 
     @task
-    def load(earthquakes_list: list, collection: pymongo.collection.Collection) -> None:
+    def load(earthquakes_list: list, collection: pymongo.collection) -> None:
         """Tâche de chargement des données dans la base de données MongoDB
 
         Parameters
