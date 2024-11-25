@@ -22,28 +22,39 @@ def superheroes_etl():
         mongo_db: str = "earthquake_db",
         mongo_collection: str = "earthquakes",
     ) -> tuple:
-        """_summary_
+        """Connexion à la base de données MongoDB
 
         Parameters
         ----------
         mongo_client : _type_, optional
             url de connexion à la base de données MongoDB, by default "mongodb://localhost:27017/"
         mongo_db : str, optional
-            _description_, by default "earthquake_db"
+            nom de la base de données, by default "earthquake_db"
         mongo_collection : str, optional
-            _description_, by default "earthquakes"
+            nom de la collection, by default "earthquakes"
 
         Returns
         -------
         tuple
-            Tuple contenant le client mongo, la db et la collection pour requêter la base de données
+            tuple contenant le client mongo, la db et la collection pour requêter la base de données
         """
 
         client = pymongo.MongoClient(mongo_client)
-        db = client["earthquake_db"]
-        collection = db["earthquakes"]
+        db = client[mongo_db]
+        collection = db[mongo_collection]
 
         return client, db, collection
+
+    @task
+    def disconnect_mongo(client: pymongo.MongoClient):
+        """Déconnexion du client MongoDB
+
+        Parameters
+        ----------
+        client : pymongo.MongoClient
+            client MongoDB à déconnecter
+        """
+        client.close()
 
     @task
     def extract(
@@ -80,14 +91,11 @@ def superheroes_etl():
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Phase de récupération de la dernière date de requête
 
-        mongo_request = [
-            {"$project": {"generated": "$metadata.generated"}},
-            {"$group": {"_id": None, "maxGenerated": {"$max": "$generated"}}},
-        ]
+        res = collection.aggregate([{"$group": {"_id": None, "maxTime": {"$max": "$time"}}}])
 
-        res = list(collection.aggregate(mongo_request))
-
-        starttime = res[0]["maxGenerated"]
+        # Si il n'y a aucun document, starttime est égal à celui prédéfini, sinon au max trouvé dans la collection MongoDB
+        result = next(res, None)
+        starttime = result["maxTime"] if result else starttime
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Requête API
@@ -96,28 +104,51 @@ def superheroes_etl():
         return requests.get(final_api_request).json()
 
     @task
-    def transform(raw_df: pd.DataFrame) -> pd.DataFrame:
+    def transform(raw_data: dict) -> list[dict]:
         """Tâche de transformation du DataFrame brut
 
         Parameters
         ----------
-        raw_df : pd.DataFrame
-            DataFrame issu de la tâche d'extraction de la données
+        raw_data : dict
+            dictionnaire issu de la requête get
 
         Returns
         -------
-        pd.DataFrame
-            DataFrame ayant subi les transformations nécessaires avant son stockage
+        list
+            liste des éléments à stocker au bon format
         """
-        pass
+
+        earthquakes_list = []
+
+        for feature in raw_data["features"]:
+
+            # Création du dictionnaire temporaire
+            temp_dict = {
+                "mag": feature["properties"]["mag"],
+                "place": feature["properties"]["place"],
+                "time": feature["properties"]["time"],
+                "type": feature["properties"]["type"],
+                "nst": feature["properties"]["nst"],
+                "dmin": feature["properties"]["dmin"],
+                "sig": feature["properties"]["sig"],
+                "magType": feature["properties"]["magType"],
+                "geometryType": feature["geometry"]["type"],
+                "coordinates": feature["geometry"]["coordinates"],
+            }
+
+            # Ajout à la liste finale
+            earthquakes_list.append(temp_dict)
+
+        return earthquakes_list
 
     @task
-    def load(transformed_df: pd.DataFrame) -> None:
+    def load(earthquakes_list: list, collection: pymongo.collection.Collection) -> None:
         """Tâche de chargement des données dans la base de données MongoDB
 
         Parameters
         ----------
-        transformed_df : pd.DataFrame
-            DataFrame issu de la phase de transformation de la donnée
+        earthquakes_list : list
+            liste des dictionnaires correspondant à chaque enregistrement de tremblement de terre
         """
-        pass
+
+        collection.insert_many(earthquakes_list)
