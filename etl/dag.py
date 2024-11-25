@@ -4,15 +4,13 @@ Ce fichier est utilisé pour mettre en place l'ETL grâce à Apache Airflow
 
 # Import des librairies nécessaires
 from airflow.decorators import dag, task
-import pendulum  # noqa
-import pymongo  # noqa
-import pandas as pd  # noqa
-import os  # noqa
-import requests  # noqa
+import pendulum
+import pymongo
+import requests
 
 
 # Définition des fonctions de DAG
-@dag(schedule="@once", start_date=pendulum.datetime(2021, 1, 1, tz="UTC"), catchup=False, tags=["earthquake_dag"])
+@dag(schedule="15 * * * *", start_date=pendulum.datetime(2021, 1, 1, tz="UTC"), catchup=False, tags=["earthquake_dag"])
 def earthquake_etl():
     """DAG global d'import des données des tremblement de terre depuis le fichier csv des données brutes vers la base de données MongoDB"""
 
