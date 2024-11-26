@@ -4,6 +4,7 @@ Ce fichier est utilisé pour mettre en place l'ETL grâce à Apache Airflow
 
 # Import des librairies nécessaires
 from airflow.decorators import dag, task
+from airflow.exceptions import AirflowException
 import pendulum
 import pymongo
 import pymongo.collection
@@ -12,7 +13,7 @@ import requests
 
 # Définition des fonctions de DAG
 @dag(
-    schedule="* * * * *",  # Exécution toutes les minutes
+    schedule="3 * * * *",  # Exécution toutes les minutes
     start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
     max_active_runs=1,  # Ici on définit ce paramètre à 1 pour empêcher les doublons d'exécution de ce DAG
     catchup=False,
@@ -20,46 +21,6 @@ import requests
 )
 def earthquake_etl():
     """DAG global d'import des données des tremblement de terre depuis le fichier csv des données brutes vers la base de données MongoDB"""
-
-    # @task
-    # def connect_mongo(
-    #     mongo_client: str = "mongodb://localhost:27017/",
-    #     mongo_db: str = "earthquake_db",
-    #     mongo_collection: str = "earthquakes",
-    # ) -> tuple:
-    #     """Connexion à la base de données MongoDB
-
-    #     Parameters
-    #     ----------
-    #     mongo_client : _type_, optional
-    #         url de connexion à la base de données MongoDB, by default "mongodb://localhost:27017/"
-    #     mongo_db : str, optional
-    #         nom de la base de données, by default "earthquake_db"
-    #     mongo_collection : str, optional
-    #         nom de la collection, by default "earthquakes"
-
-    #     Returns
-    #     -------
-    #     tuple
-    #         tuple contenant le client mongo, la db et la collection pour requêter la base de données
-    #     """
-
-    #     client = pymongo.MongoClient(mongo_client)
-    #     db = client[mongo_db]
-    #     collection = db[mongo_collection]
-
-    #     return client, db, collection
-
-    # @task
-    # def disconnect_mongo(client: pymongo.MongoClient) -> None:
-    #     """Déconnexion du client MongoDB
-
-    #     Parameters
-    #     ----------
-    #     client : pymongo.MongoClient
-    #         client MongoDB à déconnecter
-    #     """
-    #     client.close()
 
     @task
     def extract(
@@ -118,7 +79,13 @@ def earthquake_etl():
         # Fermeture du client MongoDB
         client.close()
 
-        return raw_data
+        # -------------------------------------------------------------------------------------------------------------------------------------------#
+        # Vérification de l'existence de features
+
+        if len(raw_data["features"]) > 0:
+            return raw_data
+        else:
+            raise AirflowException("pas de nouveaux features, arrêt du DAG.")
 
     @task
     def transform(raw_data: dict) -> list[dict]:
@@ -135,30 +102,28 @@ def earthquake_etl():
             liste des éléments à stocker au bon format
         """
 
-        if len(raw_data["features"]) != 0:
+        earthquakes_list = []
 
-            earthquakes_list = []
+        for feature in raw_data["features"]:
 
-            for feature in raw_data["features"]:
+            # Création du dictionnaire temporaire
+            temp_dict = {
+                "mag": feature["properties"]["mag"],
+                "place": feature["properties"]["place"],
+                "time": feature["properties"]["time"],
+                "type": feature["properties"]["type"],
+                "nst": feature["properties"]["nst"],
+                "dmin": feature["properties"]["dmin"],
+                "sig": feature["properties"]["sig"],
+                "magType": feature["properties"]["magType"],
+                "geometryType": feature["geometry"]["type"],
+                "coordinates": feature["geometry"]["coordinates"],
+            }
 
-                # Création du dictionnaire temporaire
-                temp_dict = {
-                    "mag": feature["properties"]["mag"],
-                    "place": feature["properties"]["place"],
-                    "time": feature["properties"]["time"],
-                    "type": feature["properties"]["type"],
-                    "nst": feature["properties"]["nst"],
-                    "dmin": feature["properties"]["dmin"],
-                    "sig": feature["properties"]["sig"],
-                    "magType": feature["properties"]["magType"],
-                    "geometryType": feature["geometry"]["type"],
-                    "coordinates": feature["geometry"]["coordinates"],
-                }
+            # Ajout à la liste finale
+            earthquakes_list.append(temp_dict)
 
-                # Ajout à la liste finale
-                earthquakes_list.append(temp_dict)
-
-            return earthquakes_list
+        return earthquakes_list
 
     @task
     def load(
