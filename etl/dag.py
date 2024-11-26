@@ -5,7 +5,7 @@ Ce fichier est utilisé pour mettre en place l'ETL grâce à Apache Airflow
 # Import des librairies nécessaires
 from airflow.decorators import dag, task
 from airflow.exceptions import AirflowException
-from airflow.utils.dates import days_ago
+import pendulum
 import pymongo
 import pymongo.collection
 import requests
@@ -22,7 +22,7 @@ default_args = {
 @dag(
     schedule="*/1 * * * *",  # Exécution toutes les minutes
     default_args=default_args,
-    start_date=days_ago(1),
+    start_date=pendulum.today("UTC").add(days=-1),
     max_active_runs=1,  # Ici on définit ce paramètre à 1 pour empêcher les doublons d'exécution de ce DAG
     catchup=False,
     tags=["earthquake_dag"],
@@ -37,7 +37,7 @@ def earthquake_etl():
         collection: str = "earthquakes",
         request: str = "https://earthquake.usgs.gov/fdsnws/event/1/query?",
         format: str = "geojson",
-        starttime: str = "2024-11-01",
+        starttime: pendulum.datetime = pendulum.now("UTC").add(days=-1).strftime("%Y-%m-%dT%H:%M:%S"),
     ) -> dict:
         """Tâche d'extraction de la donnée depuis l'API
 
