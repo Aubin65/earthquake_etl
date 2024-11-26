@@ -11,55 +11,55 @@ import requests
 
 
 # Définition des fonctions de DAG
-@dag(schedule="15 * * * *", start_date=pendulum.datetime(2021, 1, 1, tz="UTC"), catchup=False, tags=["earthquake_dag"])
+@dag(schedule="* * * * *", start_date=pendulum.datetime(2021, 1, 1, tz="UTC"), catchup=False, tags=["earthquake_dag"])
 def earthquake_etl():
     """DAG global d'import des données des tremblement de terre depuis le fichier csv des données brutes vers la base de données MongoDB"""
 
-    @task
-    def connect_mongo(
-        mongo_client: str = "mongodb://localhost:27017/",
-        mongo_db: str = "earthquake_db",
-        mongo_collection: str = "earthquakes",
-    ) -> tuple:
-        """Connexion à la base de données MongoDB
+    # @task
+    # def connect_mongo(
+    #     mongo_client: str = "mongodb://localhost:27017/",
+    #     mongo_db: str = "earthquake_db",
+    #     mongo_collection: str = "earthquakes",
+    # ) -> tuple:
+    #     """Connexion à la base de données MongoDB
 
-        Parameters
-        ----------
-        mongo_client : _type_, optional
-            url de connexion à la base de données MongoDB, by default "mongodb://localhost:27017/"
-        mongo_db : str, optional
-            nom de la base de données, by default "earthquake_db"
-        mongo_collection : str, optional
-            nom de la collection, by default "earthquakes"
+    #     Parameters
+    #     ----------
+    #     mongo_client : _type_, optional
+    #         url de connexion à la base de données MongoDB, by default "mongodb://localhost:27017/"
+    #     mongo_db : str, optional
+    #         nom de la base de données, by default "earthquake_db"
+    #     mongo_collection : str, optional
+    #         nom de la collection, by default "earthquakes"
 
-        Returns
-        -------
-        tuple
-            tuple contenant le client mongo, la db et la collection pour requêter la base de données
-        """
+    #     Returns
+    #     -------
+    #     tuple
+    #         tuple contenant le client mongo, la db et la collection pour requêter la base de données
+    #     """
 
-        client = pymongo.MongoClient(mongo_client)
-        db = client[mongo_db]
-        collection = db[mongo_collection]
+    #     client = pymongo.MongoClient(mongo_client)
+    #     db = client[mongo_db]
+    #     collection = db[mongo_collection]
 
-        return client, db, collection
+    #     return client, db, collection
 
-    @task
-    def disconnect_mongo(client: pymongo.MongoClient) -> None:
-        """Déconnexion du client MongoDB
+    # @task
+    # def disconnect_mongo(client: pymongo.MongoClient) -> None:
+    #     """Déconnexion du client MongoDB
 
-        Parameters
-        ----------
-        client : pymongo.MongoClient
-            client MongoDB à déconnecter
-        """
-        client.close()
+    #     Parameters
+    #     ----------
+    #     client : pymongo.MongoClient
+    #         client MongoDB à déconnecter
+    #     """
+    #     client.close()
 
     @task
     def extract(
-        client: str,
-        db: str,
-        collection: str,
+        client: str = "mongodb://localhost:27017/",
+        db: str = "earthquake_db",
+        collection: str = "earthquakes",
         request: str = "https://earthquake.usgs.gov/fdsnws/event/1/query?",
         format: str = "geojson",
         starttime: str = "2024-11-01",
@@ -88,6 +88,12 @@ def earthquake_etl():
         """
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
+        # Connexion à la base de données MongoDB
+        client = pymongo.MongoClient(client)
+        db = client[db]
+        collection = db[collection]
+
+        # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Phase de récupération de la dernière date de requête
 
         res = collection.aggregate([{"$group": {"_id": None, "maxTime": {"$max": "$time"}}}])
@@ -100,7 +106,13 @@ def earthquake_etl():
         # Requête API
         final_api_request = f"{request}format={format}&starttime={starttime}"
 
-        return requests.get(final_api_request).json()
+        raw_data = requests.get(final_api_request).json()
+
+        # -------------------------------------------------------------------------------------------------------------------------------------------#
+        # Fermeture du client MongoDB
+        client.close()
+
+        return raw_data
 
     @task
     def transform(raw_data: dict) -> list[dict]:
@@ -141,7 +153,12 @@ def earthquake_etl():
         return earthquakes_list
 
     @task
-    def load(earthquakes_list: list, collection: pymongo.collection) -> None:
+    def load(
+        earthquakes_list: list,
+        client: str = "mongodb://localhost:27017/",
+        db: str = "earthquake_db",
+        collection: str = "earthquakes",
+    ) -> None:
         """Tâche de chargement des données dans la base de données MongoDB
 
         Parameters
@@ -150,22 +167,22 @@ def earthquake_etl():
             liste des dictionnaires correspondant à chaque enregistrement de tremblement de terre
         """
 
+        client = pymongo.MongoClient(client)
+        db = client[db]
+        collection = db[collection]
+
         collection.insert_many(earthquakes_list)
 
-    # Extraction du client, de la db et de la collection concernée
-    client, db, collection = connect_mongo()
+        client.close()
 
     # Extraction des données brutes
-    raw_dict = extract(client=client, db=db, collection=collection)
+    raw_dict = extract()
 
     # Transformation des données brutes pour ne garder que ce qui nous intéresse
     transformed_dicts = transform(raw_dict)
 
     # Chargement des données
-    load(earthquakes_list=transformed_dicts, collection=collection)
-
-    # Déconnexion du client
-    disconnect_mongo(client)
+    load(earthquakes_list=transformed_dicts)
 
 
 # Lancement du DAG général
