@@ -11,7 +11,13 @@ import requests
 
 
 # Définition des fonctions de DAG
-@dag(schedule="* * * * *", start_date=pendulum.datetime(2021, 1, 1, tz="UTC"), catchup=False, tags=["earthquake_dag"])
+@dag(
+    schedule="* * * * *",  # Exécution toutes les minutes
+    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
+    max_active_runs=1,  # Ici on définit ce paramètre à 1 pour empêcher les doublons d'exécution de ce DAG
+    catchup=False,
+    tags=["earthquake_dag"],
+)
 def earthquake_etl():
     """DAG global d'import des données des tremblement de terre depuis le fichier csv des données brutes vers la base de données MongoDB"""
 
@@ -129,28 +135,30 @@ def earthquake_etl():
             liste des éléments à stocker au bon format
         """
 
-        earthquakes_list = []
+        if len(raw_data["features"]) != 0:
 
-        for feature in raw_data["features"]:
+            earthquakes_list = []
 
-            # Création du dictionnaire temporaire
-            temp_dict = {
-                "mag": feature["properties"]["mag"],
-                "place": feature["properties"]["place"],
-                "time": feature["properties"]["time"],
-                "type": feature["properties"]["type"],
-                "nst": feature["properties"]["nst"],
-                "dmin": feature["properties"]["dmin"],
-                "sig": feature["properties"]["sig"],
-                "magType": feature["properties"]["magType"],
-                "geometryType": feature["geometry"]["type"],
-                "coordinates": feature["geometry"]["coordinates"],
-            }
+            for feature in raw_data["features"]:
 
-            # Ajout à la liste finale
-            earthquakes_list.append(temp_dict)
+                # Création du dictionnaire temporaire
+                temp_dict = {
+                    "mag": feature["properties"]["mag"],
+                    "place": feature["properties"]["place"],
+                    "time": feature["properties"]["time"],
+                    "type": feature["properties"]["type"],
+                    "nst": feature["properties"]["nst"],
+                    "dmin": feature["properties"]["dmin"],
+                    "sig": feature["properties"]["sig"],
+                    "magType": feature["properties"]["magType"],
+                    "geometryType": feature["geometry"]["type"],
+                    "coordinates": feature["geometry"]["coordinates"],
+                }
 
-        return earthquakes_list
+                # Ajout à la liste finale
+                earthquakes_list.append(temp_dict)
+
+            return earthquakes_list
 
     @task
     def load(
