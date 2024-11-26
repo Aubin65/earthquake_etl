@@ -30,7 +30,7 @@ default_args = {
 def purge_earthquake_db():
 
     @task
-    def cleanse(
+    def purge(
         client: str = "mongodb://localhost:27017/", db: str = "earthquake_db", collection: str = "earthquakes"
     ) -> None:
 
@@ -39,4 +39,13 @@ def purge_earthquake_db():
         db = client[db]
         collection = db[collection]
 
-        pass
+        yesterday = pendulum.now("UTC").add(days=-1).strftime("%Y-%m-%dT%H:%M:%S")
+
+        myquery = {"date": {"$lte": f"{yesterday}"}}
+
+        collection.delete_many(myquery)
+
+    purge()
+
+
+purge_earthquake_db()
