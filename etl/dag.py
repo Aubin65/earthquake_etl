@@ -9,7 +9,7 @@ from airflow.utils.dates import days_ago
 import pymongo
 import pymongo.collection
 import requests
-from datetime import datetime
+from datetime import datetime, timezone
 
 # DAG de base
 default_args = {
@@ -118,7 +118,9 @@ def earthquake_etl():
             temp_dict = {
                 "mag": feature["properties"]["mag"],
                 "place": feature["properties"]["place"],
-                "date": datetime.utcfromtimestamp(feature["properties"]["time"] / 1000).strftime("%Y-%m-%dT%H:%M:%S"),
+                "date": datetime.fromtimestamp(feature["properties"]["time"] / 1000, timezone.utc).strftime(
+                    "%Y-%m-%dT%H:%M:%S"
+                ),
                 # "time": feature["properties"]["time"],
                 "type": feature["properties"]["type"],
                 "nst": feature["properties"]["nst"],
