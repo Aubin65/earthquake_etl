@@ -71,7 +71,7 @@ def earthquake_etl():
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Phase de récupération de la dernière date de requête
 
-        res = collection.aggregate([{"$group": {"_id": None, "maxDate": {"$max": "$maxDate"}}}])
+        res = collection.aggregate([{"$group": {"_id": None, "maxDate": {"$max": "$date"}}}])
 
         # Si il n'y a aucun document, starttime est égal à celui prédéfini, sinon au max trouvé dans la collection MongoDB
         result = next(res, None)
