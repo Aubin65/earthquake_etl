@@ -5,16 +5,23 @@ Ce fichier est utilisé pour mettre en place l'ETL grâce à Apache Airflow
 # Import des librairies nécessaires
 from airflow.decorators import dag, task
 from airflow.exceptions import AirflowException
-import pendulum
+from airflow.utils.dates import days_ago
 import pymongo
 import pymongo.collection
 import requests
 
+# DAG de base
+default_args = {
+    "owner": "airflow",
+    "retries": 0,
+}
+
 
 # Définition des fonctions de DAG
 @dag(
-    schedule="3 * * * *",  # Exécution toutes les minutes
-    start_date=pendulum.datetime(2021, 1, 1, tz="UTC"),
+    schedule="*/1 * * * *",  # Exécution toutes les minutes
+    default_args=default_args,
+    start_date=days_ago(1),
     max_active_runs=1,  # Ici on définit ce paramètre à 1 pour empêcher les doublons d'exécution de ce DAG
     catchup=False,
     tags=["earthquake_dag"],
