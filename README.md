@@ -6,20 +6,17 @@
 
 Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les minutes et stockera les informations qui n'ont pas encore été stockées dans une base de donnée MongoDB locale. La fonction de purge, quant à elle, viendra automatiquement purger les données qui sont plus anciennes avec les paramètres convenus.
 
-
 ## Prérequis :
 
 * Un [environnement virtuel](https://docs.python.org/3/library/venv.html)
 * Une configuration [Apache Airflow](https://airflow.apache.org/)
 * Une configuration [MongoDB](https://www.mongodb.com/)
 
-
 ## Structure :
 
 Le projet est, comme précédemment décrit, structuré en deux DAGs (workflows) :
 * Un [DAG d'ETL](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/etl.py)
 * Un [DAG de purge](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/purge.py)
-
 
 ## ETL :
 
@@ -49,7 +46,6 @@ Les seules transformations effectuées sont :
 * Une sélection spécifique des données
 * Un changement du format de la date : timestamp -> UTC
 * Une séparation des différents composants de la géolocalisation
-
 
 ## Purge :
 
