@@ -1,8 +1,8 @@
 # Projet d'ETL via l'API d'enregistrement des tremblements de terre
 
-
+<p align="center">
 ![Earthquake](images/earthquake.png)
-
+</p>
 
 ## Contexte :
 
