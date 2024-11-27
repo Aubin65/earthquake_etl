@@ -24,3 +24,8 @@ La forme de chaque document est la suivante :
 
 Pour cela, j'ai décidé de récupérer les coordonnées de manière séparée pour pouvoir les utiliser directement dans des visuels de carte.
 
+Le projet est structuré en deux DAGs (workflows):
+* Un DAG d'ETL
+* Un DAG de purge
+
+En effet, l'un des défis pour ne pas surcharger ni la base de données, ni les visuels, est de ne pas récupérer l'historique des données mais seulement une journée de données. Pour cela, nous récupérons les données lorsqu'elles sortent, puis nous purgeons celles qui sont plus anciennes que la veille à la même heure.
