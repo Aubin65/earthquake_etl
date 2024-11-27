@@ -15,7 +15,7 @@ st.write(
     "Vous vous êtes toujours intéressés aux tremblements de terre ? Voici une cartographie de ceux ayant eu lieu durant la dernière journée :"
 )
 
-mag_min, mag_max = st.slider("Sélectionner l'amplitude de magnitude", 0, 12)
+mag_min, mag_max = st.slider("Sélectionner l'amplitude de magnitude", 0.00, 12.00, (0.00, 12.00))
 
 st.plotly_chart(plot_earthquake_locations(collection=collection, mag_min=mag_min, mag_max=mag_max))
 
