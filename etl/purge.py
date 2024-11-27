@@ -33,16 +33,30 @@ def purge_earthquake_db():
     def purge(
         client: str = "mongodb://localhost:27017/", db: str = "earthquake_db", collection: str = "earthquakes"
     ) -> None:
+        """Fonction de purge de la base de données earthquake pour les données plus anciennes qu'un jour
+
+        Parameters
+        ----------
+        client : _type_, optional
+            adresse de la base MongoDB, by default "mongodb://localhost:27017/"
+        db : str, optional
+            nom de la base de données MongoDB, by default "earthquake_db"
+        collection : str, optional
+            nom de la collection dans la base de données MongoDB, by default "earthquakes"
+        """
 
         # Connexion à la base de données MongoDB
         client = pymongo.MongoClient(client)
         db = client[db]
         collection = db[collection]
 
+        # Récupération de la date de la veille
         yesterday = pendulum.now("UTC").add(days=-1).strftime("%Y-%m-%dT%H:%M:%S")
 
+        # Requête permettant de récupérer les enregistrements plus anciens qu'un jour avant
         myquery = {"date": {"$lte": f"{yesterday}"}}
 
+        # Suppression de ces enregistrements
         collection.delete_many(myquery)
 
     purge()
