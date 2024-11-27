@@ -1,8 +1,33 @@
-# earthquake_etl
+# Projet d'ETL via l'API d'enregistrement des tremblements de terre
 
-Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les minutes et stockera les informations qui n'ont pas encore été stockées dans la base de données MongoDB. La fonction de purge, quant à elle, viendra automatiquement purger les données qui sont plus anciennes avec les paramètres convenus (ici plus anciennes qu'un jour).
 
-La forme de chaque document dans la base de données MongoDB est la suivante : 
+![Earthquake](images/earthquake.png)
+
+
+## Contexte :
+
+Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les minutes et stockera les informations qui n'ont pas encore été stockées dans une base de donnée MongoDB locale. La fonction de purge, quant à elle, viendra automatiquement purger les données qui sont plus anciennes avec les paramètres convenus.
+
+
+## Prérequis :
+
+* Un [environnement virtuel](https://docs.python.org/3/library/venv.html)
+* Une configuration [Apache Airflow](https://airflow.apache.org/)
+* Une configuration [MongoDB](https://www.mongodb.com/)
+
+
+## Structure :
+
+Le projet est, comme précédemment décrit, structuré en deux DAGs (workflows) :
+* Un [DAG d'ETL](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/etl.py)
+* Un [DAG de purge](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/purge.py)
+
+
+## ETL :
+
+Comme décrit précédemment, l'ETL va venir requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain pour récupérer les données dont nous avons besoin.
+
+Les données sont stockées sous la forme suivante dans la base de données MongoDB :
 
 ```json
 {
@@ -27,8 +52,9 @@ Les seules transformations effectuées sont :
 * Un changement du format de la date : timestamp -> UTC
 * Une séparation des différents composants de la géolocalisation
 
-Le projet est, comme précédemment décrit, structuré en deux DAGs (workflows):
-* Un DAG d'ETL
-* Un DAG de purge
 
-En effet, l'un des défis pour ne pas surcharger ni la base de données, ni les visuels, est de ne pas récupérer l'historique des données mais seulement une journée de données. Pour cela, nous récupérons les données lorsqu'elles sortent, puis nous purgeons celles qui sont plus anciennes que la veille à la même heure.
+## Purge :
+
+L'un des défis pour ne pas surcharger ni la base de données, ni les visuels, est de ne pas récupérer l'historique des données mais seulement une journée de données. Pour cela, nous récupérons les données lorsqu'elles apparaissent, puis nous purgeons celles qui sont plus anciennes que la veille à la même heure.
+
+La visée de ce projet est d'avoir une base de données recueillant seulement les données très récentes sur les tremblements de terre. D'autres utilisations de l'API pourraient mener à des rapports historiques concernant les statistiques collectées mais ce n'est pas le but de ce projet de test.
