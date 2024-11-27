@@ -52,3 +52,9 @@ Les seules transformations effectuées sont :
 L'un des défis pour ne pas surcharger ni la base de données, ni les visuels, est de ne pas récupérer l'historique des données mais seulement une journée de données. Pour cela, nous récupérons les données lorsqu'elles apparaissent, puis nous purgeons celles qui sont plus anciennes que la veille à la même heure.
 
 La visée de ce projet est d'avoir une base de données recueillant seulement les données très récentes sur les tremblements de terre. D'autres utilisations de l'API pourraient mener à des rapports historiques concernant les statistiques collectées mais ce n'est pas le but de ce projet de test.
+
+## Approfondissement du projet :
+
+Pour approfondir ce projet de data engineering, voici deux pistes potentielles : 
+* Ajouter d'autres collections qui sont en lien avec celle déjà présente
+* Par conséquent ajouter d'autres sources de données pour complexifier la pipeline
