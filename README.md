@@ -53,6 +53,16 @@ L'un des défis pour ne pas surcharger ni la base de données, ni les visuels, e
 
 La visée de ce projet est d'avoir une base de données recueillant seulement les données très récentes sur les tremblements de terre. D'autres utilisations de l'API pourraient mener à des rapports historiques concernant les statistiques collectées mais ce n'est pas le but de ce projet de test.
 
+## Visualisation :
+
+Il existe dans l'onglet [streamlit](https://github.com/Aubin65/earthquake_etl/tree/main/streamlit) un [fichier](https://github.com/Aubin65/earthquake_etl/blob/main/streamlit/streamlit.py) qui permet de visualiser ces tremblements de terre en fonction de leur magnitude. 
+
+Pour lancer ce fichier, il faut se placer dans son répertoire et lancer la ligne de code suivante : 
+
+```bash
+streamlit run streamlit.py
+```
+
 ## Approfondissement du projet :
 
 Pour approfondir ce projet de data engineering, voici deux pistes potentielles : 
