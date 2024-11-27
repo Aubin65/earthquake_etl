@@ -4,16 +4,27 @@ Ce fichier est utilisé pour mettre en place les fonctions de visualisation des 
 
 # Import des librairies nécessaires
 import plotly.express as px
+from plotly.graph_objects import Figure
 import pandas as pd
+import pymongo.collection
 
 
-def plot_earthquake_locations(collection, mag_min: int = 0, mag_max: int = 12) -> None:
+def plot_earthquake_locations(collection: pymongo.collection, mag_min: int = 0, mag_max: int = 12) -> Figure:
     """Fonction de plot de la carte du monde des tremblements de terre datant de la veille
 
     Parameters
     ----------
     collection : pymongo.collection
         collection utilisée pour se connecter à la base mongodb
+    mag_min : int, optional
+        magnitude minimale, by default 0
+    mag_max : int, optional
+        magnitude maximale, by default 12
+
+    Returns
+    -------
+    Figure
+        objet plotly.graph_objects utilisé pour l'affichage du graphique
     """
 
     # Extraction des données (longitudes et latitudes)
