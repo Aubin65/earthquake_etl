@@ -1,8 +1,8 @@
 # earthquake_etl
 
-Pour ce projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les 15 minutes et stockera les informations qui n'ont pas encore été stockées dans la base de données MongoDB.
+Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les minutes et stockera les informations qui n'ont pas encore été stockées dans la base de données MongoDB. La fonction de purge, quant à elle, viendra automatiquement purger les données qui sont plus anciennes avec les paramètres convenus (ici plus anciennes qu'un jour).
 
-La forme de chaque document est la suivante : 
+La forme de chaque document dans la base de données MongoDB est la suivante : 
 
 ```json
 {
@@ -22,9 +22,12 @@ La forme de chaque document est la suivante :
 }
 ```
 
-Pour cela, j'ai décidé de récupérer les coordonnées de manière séparée pour pouvoir les utiliser directement dans des visuels de carte.
+Les seules transformations effectuées sont :
+* Une sélection spécifique des données
+* Un changement du format de la date : timestamp -> UTC
+* Une séparation des différents composants de la géolocalisation
 
-Le projet est structuré en deux DAGs (workflows):
+Le projet est, comme précédemment décrit, structuré en deux DAGs (workflows):
 * Un DAG d'ETL
 * Un DAG de purge
 
