@@ -10,7 +10,7 @@ from useful_functions.raw_data import get_raw_data
 
 client, db, collection = connect_mongo()
 
-st.title("A la découverte des tremblements de terre récents")
+st.title("Tremblements de terre récents")
 
 st.header("Graphique")
 
