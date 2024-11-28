@@ -71,12 +71,9 @@ L'affichage est divisé lui aussi en deux parties :
 
 Les rendus sont de la forme suivante : 
 
-<br>
-<center>
-<img src="images/visuel_earthquakes.png">
-<i>Tremblements de terre dans le monde lors des 24 dernières heures</i>
-</center>
-</br>
+![Tremblements de terre dans le monde lors des 24 dernières heures](images/visuel_earthquakes.png)
+<center><i>Tremblements de terre dans le monde lors des 24 dernières heures</i></center>
+
 
 <br>
 <center>
