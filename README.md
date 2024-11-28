@@ -74,7 +74,7 @@ Les rendus sont de la forme suivante :
 <br>
 <center>
 <img src="images/visuel_earthquakes.png">
-<i>n plus proches Tremblements de terre dans le monde lors des 24 dernières heures</i>
+<i>Tremblements de terre dans le monde lors des 24 dernières heures</i>
 </center>
 </br>
 
