@@ -55,13 +55,35 @@ La visée de ce projet est d'avoir une base de données recueillant seulement le
 
 ## Visualisation :
 
-Il existe dans l'onglet [streamlit](https://github.com/Aubin65/earthquake_etl/tree/main/streamlit) un [fichier](https://github.com/Aubin65/earthquake_etl/blob/main/streamlit/streamlit.py) qui permet de visualiser ces tremblements de terre en fonction de leur magnitude. 
+Il existe dans le répertoire [streamlit](https://github.com/Aubin65/earthquake_etl/tree/main/streamlit) un [fichier](https://github.com/Aubin65/earthquake_etl/blob/main/streamlit/streamlit.py) qui permet de visualiser ces tremblements de terre en fonction de leur magnitude. 
 
 Pour lancer ce fichier, il faut se placer dans son répertoire et lancer la ligne de code suivante : 
 
 ```bash
 streamlit run streamlit.py
 ```
+
+Ce [dossier](https://github.com/Aubin65/earthquake_etl/tree/main/streamlit) contient les fonctions permettant la créations des visuels streamlit grâce aux librairies pandas et plotly. 
+
+L'affichage est divisé lui aussi en deux parties : 
+* Une partie concernant les tremblements de terre ayant eu lieu durant les 24 dernières heures avec filtre sur la magnitude
+* Une partie concernant les n plus proches tremblements de terre parmi ceux précédemment cités
+
+Les rendus sont de la forme suivante : 
+
+<br>
+<center>
+<img src="images/visuel_earthquakes.png">
+<i>Tremblements de terre dans le monde lors des 24 dernières heures</i>
+</center>
+</br>
+
+<br>
+<center>
+<img src="images/visuel_earthquakes_proches.png">
+<i>n plus proches Tremblements de terre dans le monde lors des 24 dernières heures</i>
+</center>
+</br>
 
 ## Approfondissement du projet :
 
