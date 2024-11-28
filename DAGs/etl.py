@@ -10,6 +10,7 @@ import pymongo
 import pymongo.collection
 import requests
 from datetime import datetime, timezone
+from geopy.distance import geodesic
 
 # DAG de base
 default_args = {
@@ -96,13 +97,15 @@ def earthquake_etl():
             raise AirflowException("pas de nouveaux features, arrêt du DAG.")
 
     @task
-    def transform(raw_data: dict) -> list[dict]:
+    def transform(raw_data: dict, own_position: tuple = (43.46602, -0.75166)) -> list[dict]:
         """Tâche de transformation du DataFrame brut
 
         Parameters
         ----------
         raw_data : dict
             dictionnaire issu de la requête get
+        own_position : tuple, optional
+            position à laquelle on se trouve, by default (43.46602, -0.75166) (position d'Octime)
 
         Returns
         -------
@@ -113,6 +116,8 @@ def earthquake_etl():
         earthquakes_list = []
 
         for feature in raw_data["features"]:
+
+            point = (feature["geometry"]["coordinates"][1], feature["geometry"]["coordinates"][0])
 
             # Création du dictionnaire temporaire
             temp_dict = {
@@ -129,9 +134,10 @@ def earthquake_etl():
                 "magType": feature["properties"]["magType"],
                 "geometryType": feature["geometry"]["type"],
                 # "coordinates": feature["geometry"]["coordinates"],
-                "longitude": feature["geometry"]["coordinates"][0],
-                "latitude": feature["geometry"]["coordinates"][1],
+                "longitude": point[1],
+                "latitude": point[0],
                 "depth": feature["geometry"]["coordinates"][2],
+                "distance_from_us_km": round(geodesic(point, own_position).kilometers, 2),
             }
 
             # Ajout à la liste finale
