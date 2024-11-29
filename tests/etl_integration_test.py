@@ -62,6 +62,7 @@ def test_task_dependencies():
 def test_full_dag_execution():
     """
     Fonction de test (end-to-end) du run complet du DAG earthquake_etl
+    NB : Pour le moment, ce test n'est pas fonctionnel. Il run complètement le DAG en prod (sans mock) mais certaines instances ne fonctionnent pas
     """
 
     # Récupération du DAG
