@@ -82,7 +82,7 @@ def earthquake_etl():
         # Requête API
         final_api_request = f"{request}format={format}&starttime={starttime}"
 
-        raw_data = requests.get(final_api_request).json()
+        raw_data = requests.get(final_api_request, timeout=15).json()
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Fermeture du client MongoDB
