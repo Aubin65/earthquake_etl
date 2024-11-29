@@ -17,6 +17,9 @@ def test_dag_loading():
     # Récupération du DAG
     dag_bag = DagBag()
 
+    # On s'assure qu'il n'y a pas d'erreur lors de l'import du DagBag
+    assert not dag_bag.import_errors
+
     # On s'assure que le DAG est bien présent dans la liste des DAGs
     assert "earthquake_etl" in dag_bag.dags, "DAG earthquake_etl inexistant"
 
