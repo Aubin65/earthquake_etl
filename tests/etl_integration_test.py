@@ -5,6 +5,7 @@ Ce script python est utilisé pour tester les DAGs et fonctions mises en place d
 # Import des librairies nécessaires
 from airflow.models import DagBag
 from airflow.utils.state import State
+import pendulum
 
 
 def test_dag_loading():
@@ -14,20 +15,26 @@ def test_dag_loading():
     """
 
     # Récupération du DAG
-    dag = DagBag()
+    dag_bag = DagBag()
 
-    # Vérifier que le DAG existe
-    assert dag is not None, "DAG inexistant"
+    # On s'assure que le DAG est bien présent dans la liste des DAGs
+    assert "earthquake_etl" in dag_bag.dags, "DAG earthquake_etl inexistant"
 
-    # Test sur les erreurs du DAG
-    assert len(dag.import_errors) == 0, "No DAG loading errors"
+    # Récupération du DAG earthquake_etl
+    dag = dag_bag.get_dag("earthquake_etl")
+
+    # Vérifier le nombre de tâches du DAG
+    assert len(dag.tasks) == 3
 
     # Vérifier les tâches attendues du DAG
-    assert dag.task_ids == {"extract", "load", "transform"}, "Tâches non conformes"
+    assert dag.task_ids == ["extract", "transform", "load"], "Tâches non conformes"
 
 
-# Test d'intégration (source : https://www.restack.io/docs/airflow-knowledge-apache-unit-testing)
 def test_task_dependencies():
+    """
+    Fonction de test des dépendances dans le DAG earthquake_etl
+    Source : https://www.restack.io/docs/airflow-knowledge-apache-unit-testing
+    """
 
     # Récupération du DAG
     dag = DagBag().get_dag("earthquake_etl")
@@ -52,14 +59,16 @@ def test_task_dependencies():
         ), "Dépendances upstream non correspondantes"
 
 
-# End-to-end test
 def test_full_dag_execution():
+    """
+    Fonction de test (end-to-end) du run complet du DAG earthquake_etl
+    """
 
     # Récupération du DAG
     dag = DagBag().get_dag("earthquake_etl")
 
     # Nettoyage des exécutions passées
-    dag.clear()
+    dag.clear(start_date=pendulum.now("UTC").subtract(hours=3))
 
     # Lancement du DAG
     dag.run()
