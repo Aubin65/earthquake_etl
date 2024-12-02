@@ -6,25 +6,30 @@ Ce script python est utilisé pour tester les DAGs et fonctions mises en place d
 from airflow.models import DagBag
 from airflow.utils.state import State
 import pendulum
+import pytest
 
 
-def test_dag_loading():
+@pytest.fixture()
+def dagbag():
+    return DagBag(dag_folder="../DAGs", include_examples=False)
+
+
+def test_dag_loading(dagbag: DagBag):
     """
     Fonction de test sur le chargement du DAGs
     Source : https://www.restack.io/docs/airflow-knowledge-apache-unit-testing
     """
 
-    # Récupération du DAG
-    dag_bag = DagBag()
+    dag = dagbag.get_dag(dag_id="earthquake_etl")
 
     # On s'assure qu'il n'y a pas d'erreur lors de l'import du DagBag
-    assert not dag_bag.import_errors
+    assert dagbag.import_errors == {}, "Erreur lors de l'import du DAG"
 
-    # On s'assure que le DAG est bien présent dans la liste des DAGs
-    assert "earthquake_etl" in dag_bag.dags, "DAG earthquake_etl inexistant"
+    # On s'assure que le dag existe
+    assert dag is not None, "Le dag n'existe pas"
 
     # Récupération du DAG earthquake_etl
-    dag = dag_bag.get_dag("earthquake_etl")
+    # dag = dag_bag.get_dag("earthquake_etl")
 
     # Vérifier le nombre de tâches du DAG
     assert len(dag.tasks) == 3
