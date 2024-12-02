@@ -17,7 +17,9 @@ def dagbag():
 def test_dag_loading(dagbag: DagBag):
     """
     Fonction de test sur le chargement du DAGs
-    Source : https://www.restack.io/docs/airflow-knowledge-apache-unit-testing
+    Source :
+    https://airflow.apache.org/docs/apache-airflow/stable/best-practices.html
+    https://www.restack.io/docs/airflow-knowledge-apache-unit-testing
     """
 
     dag = dagbag.get_dag(dag_id="earthquake_etl")
@@ -28,11 +30,8 @@ def test_dag_loading(dagbag: DagBag):
     # On s'assure que le dag existe
     assert dag is not None, "Le dag n'existe pas"
 
-    # Récupération du DAG earthquake_etl
-    # dag = dag_bag.get_dag("earthquake_etl")
-
     # Vérifier le nombre de tâches du DAG
-    assert len(dag.tasks) == 3
+    assert len(dag.tasks) == 3, "Le nombre de tâches attendu n'est pas correct"
 
     # Vérifier les tâches attendues du DAG
     assert dag.task_ids == ["extract", "transform", "load"], "Tâches non conformes"
