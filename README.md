@@ -10,6 +10,7 @@ Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.
 
 * Un [environnement virtuel](https://docs.python.org/3/library/venv.html)
 * Une configuration [Apache Airflow](https://airflow.apache.org/)
+  * Cela implique la configuration du fichier airflow.cfg comme décrit dans le [script de chargement des variables d'environnement](https://github.com/Aubin65/earthquake_etl/blob/main/load_environment_variables/load_environment_variables.py)
 * Une configuration [MongoDB](https://www.mongodb.com/)
 
 ## Structure :
