@@ -94,3 +94,4 @@ Pour approfondir ce projet de data engineering, voici deux pistes potentielles :
 * Ajouter d'autres collections qui sont en lien avec celle déjà présente
 * Par conséquent ajouter d'autres sources de données pour complexifier la pipeline
 * Ajouter un algorithme de clustering pour essayer de retrouver les [23 plaques tectoniques](https://www.notre-planete.info/terre/risques_naturels/seismes/plaques-tectoniques.php) sachant que l'on a leur coordonnées
+* Ajouter un système d'alerting par mail quand un séisme est trop proche de notre position
