@@ -16,6 +16,7 @@ from geopy.distance import geodesic
 default_args = {
     "owner": "airflow",
     "retries": 0,
+    "depends_on_past": True,
 }
 
 
