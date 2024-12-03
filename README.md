@@ -39,7 +39,8 @@ Les données sont stockées sous la forme suivante dans la base de données Mong
   "geometryType": "Point",
   "longitude": -122.842666625977,
   "latitude": 38.8193321228027,
-  "depth": 2.46000003814697
+  "depth": 2.46000003814697,
+  "distance_from_us_km": 9194.42
 }
 ```
 
@@ -47,6 +48,7 @@ Les seules transformations effectuées sont :
 * Une sélection spécifique des données
 * Un changement du format de la date : timestamp -> UTC
 * Une séparation des différents composants de la géolocalisation
+* L'ajout de l'attribut "distance_from_us_km" qui contient la distance entre l'épicentre du séisme et la position d'Octime
 
 ## Purge :
 
