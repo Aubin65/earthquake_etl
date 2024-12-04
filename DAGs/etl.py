@@ -52,11 +52,11 @@ def earthquake_etl():
         starttime : str, optional
             paramètre de la requête, by default "2024-11-01"
         client : str
-            client de la base de données, issu de la fonction connect_mongo()
+            client de la base de données, by default "mongodb://localhost:27017/"
         db : str
-            nom de la base de données, issu de la fonction connect_mongo()
+            nom de la base de données, by default "earthquake_db"
         collection : str
-            nom de la collection, issu de la fonction connect_mongo()
+            nom de la collection, by default "earthquakes"
 
         Returns
         -------
