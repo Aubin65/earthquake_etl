@@ -29,7 +29,7 @@ default_args = {
     catchup=False,
     tags=["alerting_dag"],
 )
-def alert():
+def alerting_dag():
     """
     Ce Dag est divisé en trois étapes :
         * Une étape de récupération des tremblements de terre les plus proches selon une distance minimale
@@ -117,7 +117,7 @@ def alert():
             os.environ.pop(var)
 
         # Chargement des variables d'environnement du fichier .env
-        load_dotenv(dotenv_path=os.path.join(os.getcwd(), dotenv_path))
+        load_dotenv(dotenv_path=os.path.dirname(os.path.dirname(os.getcwd()), dotenv_path))
 
         # On retourne les variables dont on a besoin
         return {var: os.getenv(var) for var in var_list}
@@ -174,4 +174,4 @@ def alert():
     alert(close_earthquakes=close_earthquakes, smtp_config=smtp_config)
 
 
-alert()
+alerting_dag()
