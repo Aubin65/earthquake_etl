@@ -13,11 +13,7 @@ from datetime import datetime, timezone
 from geopy.distance import geodesic
 
 # DAG de base
-default_args = {
-    "owner": "airflow",
-    "retries": 0,
-    "depends_on_past": True,
-}
+default_args = {"owner": "airflow", "retries": 0}
 
 
 # Définition des fonctions de DAG
