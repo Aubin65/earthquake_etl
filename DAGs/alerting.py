@@ -7,16 +7,18 @@ from airflow.decorators import dag, task
 import pendulum
 import pymongo
 import pymongo.collection
-from dotenv import load_dotenv
+from dotenv import load_dotenv  # noqa
 from email.mime.text import MIMEText
 import smtplib
-import os
+import os  # noqa
 
 # DAG de base
 default_args = {
     "owner": "airflow",
     "retries": 0,
     "depends_on_past": True,
+    "max_active_runs": 2,
+    "parallelism": 2,
 }
 
 
@@ -25,7 +27,7 @@ default_args = {
     schedule="@daily",  # Exécution quotidienne
     default_args=default_args,
     start_date=pendulum.today("UTC").add(days=-1),
-    max_active_runs=1,
+    max_active_runs=2,
     catchup=False,
     tags=["alerting_dag"],
 )
@@ -114,10 +116,11 @@ def alerting_dag():
 
         # Clear le cache si les variables ont changé
         for var in var_list:
-            os.environ.pop(var)
+            os.environ.pop(var, None)
 
         # Chargement des variables d'environnement du fichier .env
-        load_dotenv(dotenv_path=os.path.dirname(os.path.dirname(os.getcwd()), dotenv_path))
+        # load_dotenv(dotenv_path=os.path.dirname(os.path.dirname(os.getcwd()), dotenv_path))
+        load_dotenv(dotenv_path=dotenv_path)
 
         # On retourne les variables dont on a besoin
         return {var: os.getenv(var) for var in var_list}
