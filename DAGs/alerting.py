@@ -13,13 +13,7 @@ import smtplib
 import os  # noqa
 
 # DAG de base
-default_args = {
-    "owner": "airflow",
-    "retries": 0,
-    "depends_on_past": True,
-    "max_active_runs": 2,
-    "parallelism": 2,
-}
+default_args = {"owner": "airflow", "retries": 0}
 
 
 # Définition des fonctions de DAG
@@ -46,7 +40,7 @@ def alerting_dag():
         collection: str = "earthquakes",
         dist_min: int = 5000,
     ) -> list[dict]:
-        """_summary_
+        """Fonction d'extraction des données sur les tremblements de terre
 
         Parameters
         ----------
@@ -87,8 +81,7 @@ def alerting_dag():
 
     @task
     def load_env_var(
-        var_list: list[str] = ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_MAIL_FROM", "SMTP_RECIPIENTS"],
-        dotenv_path: str = ".env",
+        var_list: list[str] = ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_MAIL_FROM", "SMTP_RECIPIENTS"]
     ) -> dict:
         """Fonction de chargement des variables d'environnement nécessaires à l'envoi des mails
 
@@ -105,8 +98,6 @@ def alerting_dag():
         ----------
         var_list : list[str], optional
             liste des variables d'environnement à récupérer, by default ["SMTP_HOST", "SMTP_USER", "SMTP_PASSWORD", "SMTP_MAIL_FROM", "SMTP_RECIPIENTS"]
-        dotenv_path : str, optional
-            chemin vers le fichier .env du projet, by default ".env"
 
         Returns
         -------
@@ -119,10 +110,10 @@ def alerting_dag():
             os.environ.pop(var, None)
 
         # Chargement des variables d'environnement du fichier .env
-        # load_dotenv(dotenv_path=os.path.dirname(os.path.dirname(os.getcwd()), dotenv_path))
-        load_dotenv(dotenv_path=dotenv_path)
+        load_dotenv()
 
         # On retourne les variables dont on a besoin
+
         return {var: os.getenv(var) for var in var_list}
 
     @task
@@ -147,12 +138,70 @@ def alerting_dag():
             paramètre port pour l'envoi du mail, by default 587
         """
 
-        if len(close_earthquakes) != 0:
+        if len(close_earthquakes) > 1:
+
+            earthquake_details = "\n".join(
+                [f"- {eq['mag']} mag, {eq['place']} ({eq['date']})" for eq in close_earthquakes]
+            )
 
             # Créer un email texte brut
-            subject = "Ceci est un mail de réussite du process"
-            to_email = "airflow_user@test.com"
-            body = f"Bonjour, ceci est un email envoyé via Python. Il atteste de la réussite du DAG Airflow, il a été envoyé par {smtp_config['SMTP_USER']}"
+            subject = "ALERTE : TREMBLEMENT DE TERRE PROCHE"
+            to_email = "habitants@ville_orthez.com"
+            body = f"Bonjour, ceci est un email envoyé automatiquement à l'aide de Python.\n\
+Il est écrit pour vous prévenir que les tremblements de terre suivants ont été détectés proche d'Orthez :\n\n\
+{earthquake_details}\n\n\
+Bien cordialement,\n\
+Aubin Morlas"
+
+            msg = MIMEText(body, "plain")
+            msg["Subject"] = subject
+            msg["From"] = smtp_config["SMTP_MAIL_FROM"]
+            msg["To"] = to_email
+
+            # Envoyer l'email
+            with smtplib.SMTP(smtp_config["SMTP_HOST"], port) as server:
+                server.starttls()
+                server.login(smtp_config["SMTP_USER"], smtp_config["SMTP_PASSWORD"])
+                server.sendmail(
+                    smtp_config["SMTP_MAIL_FROM"], smtp_config["SMTP_RECIPIENTS"].split(","), msg.as_string()
+                )
+
+        elif len(close_earthquakes) == 1:
+
+            earthquake_details = "\n".join(
+                [f"- magnitude {eq['mag']}, {eq['place']} ({eq['date']})" for eq in close_earthquakes]
+            )
+
+            # Créer un email texte brut
+            subject = "ALERTE : TREMBLEMENT DE TERRE PROCHE"
+            to_email = "habitants@ville_orthez.com"
+            body = f"Bonjour, ceci est un email envoyé automatiquement à l'aide de Python.\n\
+Il est écrit pour vous prévenir que le tremblement de terre suivant a été détecté proche d'Orthez :\n\n\
+{earthquake_details}\n\n\
+Bien cordialement,\n\
+Aubin Morlas"
+
+            msg = MIMEText(body, "plain")
+            msg["Subject"] = subject
+            msg["From"] = smtp_config["SMTP_MAIL_FROM"]
+            msg["To"] = to_email
+
+            # Envoyer l'email
+            with smtplib.SMTP(smtp_config["SMTP_HOST"], port) as server:
+                server.starttls()
+                server.login(smtp_config["SMTP_USER"], smtp_config["SMTP_PASSWORD"])
+                server.sendmail(
+                    smtp_config["SMTP_MAIL_FROM"], smtp_config["SMTP_RECIPIENTS"].split(","), msg.as_string()
+                )
+
+        else:
+            # Créer un email texte brut
+            subject = "MAJ Situation tremblements de terre"
+            to_email = "habitants@ville_orthez.com"
+            body = "Bonjour, ceci est un email envoyé automatiquement à l'aide de Python.\n\
+            Il est écrit pour vous prévenir qu'aucun tremblement de terre n'a été recensé proche d'Orthez depuis hier.\
+            Bien cordialement,\
+                Aubin Morlas"
 
             msg = MIMEText(body, "plain")
             msg["Subject"] = subject
@@ -168,7 +217,7 @@ def alerting_dag():
                 )
 
     # Récupération des enregistrements proches
-    close_earthquakes = get_close_earthquakes(dist_min=9000)
+    close_earthquakes = get_close_earthquakes(dist_min=6650)
 
     # Chargement des données d'envoi des mails
     smtp_config = load_env_var()
