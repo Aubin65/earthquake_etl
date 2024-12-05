@@ -141,7 +141,7 @@ def alerting_dag():
         if len(close_earthquakes) > 1:
 
             earthquake_details = "\n".join(
-                [f"- {eq['mag']} mag, {eq['place']} ({eq['date']})" for eq in close_earthquakes]
+                [f"- magnitude {eq['mag']}, {eq['place']} ({eq['date']})" for eq in close_earthquakes]
             )
 
             # Créer un email texte brut
