@@ -4,7 +4,7 @@
 
 ## Contexte :
 
-Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les minutes et stockera les informations qui n'ont pas encore été stockées dans une base de donnée MongoDB locale. La fonction de purge, quant à elle, viendra automatiquement purger les données qui sont plus anciennes avec les paramètres convenus.
+Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les minutes et stockera les informations qui n'ont pas encore été stockées dans une base de donnée MongoDB locale. La fonction de purge, quant à elle, viendra automatiquement purger les données qui sont plus anciennes avec les paramètres convenus. Un troisième flow servira à alerter une liste de mails lorsque des séismes apparaissent trop proches de notre position (nous prendrons arbitrairement Orthez)
 
 ## Prérequis :
 
@@ -12,12 +12,14 @@ Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.
 * Une configuration [Apache Airflow](https://airflow.apache.org/)
   * Cela implique la configuration du fichier airflow.cfg comme décrit dans le [script de chargement des variables d'environnement](https://github.com/Aubin65/earthquake_etl/blob/main/load_environment_variables/load_environment_variables.py)
 * Une configuration [MongoDB](https://www.mongodb.com/)
+* Une configuration de mail (Outlook ici mais fonctionne avec d'autres services)
 
 ## Structure :
 
 Le projet est, comme précédemment décrit, structuré en deux DAGs (workflows) :
 * Un [DAG d'ETL](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/etl.py)
 * Un [DAG de purge](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/purge.py)
+* Un [DAG d'alerte](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/alerting.py)
 
 ## ETL :
 
@@ -56,6 +58,20 @@ L'un des défis pour ne pas surcharger ni la base de données, ni les visuels, e
 
 La visée de ce projet est d'avoir une base de données recueillant seulement les données très récentes sur les tremblements de terre. D'autres utilisations de l'API pourraient mener à des rapports historiques concernant les statistiques collectées mais ce n'est pas le but de ce projet de test.
 
+## Alerting :
+
+Le troisième DAG a été mis en place pour alerter les personnes concernées lorsqu'un séisme a eu lieu lors des dernières 24 heures. Le DAG vient récupérer les enregistrements plus proches que la distance minimale déclarée (5000 km par défaut) puis envoie un mail avec leur contenu aux personnes déclarées dans le fichier *.env*.
+
+Pour que ce DAG fonctionne, il faut donc créer ce fichier *.env* avec un contenu de la forme suivante : 
+
+```
+SMTP_HOST=smtp.office365.com
+SMTP_USER=user@mail.com
+SMTP_PASSWORD=pwd
+SMTP_MAIL_FROM=source@mail.com
+SMTP_RECIPIENTS=recipient1@mail.com,recipient2@mail.com
+```
+
 ## Visualisation :
 
 Il existe dans le répertoire [streamlit](https://github.com/Aubin65/earthquake_etl/tree/main/streamlit) un [fichier](https://github.com/Aubin65/earthquake_etl/blob/main/streamlit/streamlit.py) qui permet de visualiser ces tremblements de terre en fonction de leur magnitude. 
@@ -68,7 +84,7 @@ streamlit run streamlit.py
 
 Ce [dossier](https://github.com/Aubin65/earthquake_etl/tree/main/streamlit) contient les fonctions permettant la créations des visuels streamlit grâce aux librairies pandas et plotly. 
 
-L'affichage est divisé lui aussi en deux parties : 
+L'affichage est lui aussi divisé en deux parties : 
 * Une partie concernant les tremblements de terre ayant eu lieu durant les 24 dernières heures avec filtre sur la magnitude
 * Une partie concernant les n plus proches tremblements de terre parmi ceux précédemment cités
 
@@ -94,4 +110,3 @@ Pour approfondir ce projet de data engineering, voici deux pistes potentielles :
 * Ajouter d'autres collections qui sont en lien avec celle déjà présente
 * Par conséquent ajouter d'autres sources de données pour complexifier la pipeline
 * Ajouter un algorithme de clustering pour essayer de retrouver les [23 plaques tectoniques](https://www.notre-planete.info/terre/risques_naturels/seismes/plaques-tectoniques.php) sachant que l'on a leur coordonnées
-* Ajouter un système d'alerting par mail quand un séisme est trop proche de notre position
