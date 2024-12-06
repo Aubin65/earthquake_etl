@@ -52,6 +52,8 @@ Les seules transformations effectuées sont :
 * Une séparation des différents composants de la géolocalisation
 * L'ajout de l'attribut "distance_from_us_km" qui contient la distance entre l'épicentre du séisme et Orthez
 
+J'ai ici utilisé la librairie **pymongo** de python mais j'aurais pu utiliser un **MongoHook** spécifique à Airflow.
+
 ## Purge :
 
 L'un des défis pour ne pas surcharger ni la base de données, ni les visuels, est de ne pas récupérer l'historique des données mais seulement une journée de données. Pour cela, nous récupérons les données lorsqu'elles apparaissent, puis nous purgeons celles qui sont plus anciennes que la veille à la même heure.
