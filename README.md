@@ -50,7 +50,7 @@ Les seules transformations effectuées sont :
 * Une sélection spécifique des données
 * Un changement du format de la date : timestamp -> UTC
 * Une séparation des différents composants de la géolocalisation
-* L'ajout de l'attribut "distance_from_us_km" qui contient la distance entre l'épicentre du séisme et Orthez
+* L'ajout de l'attribut *distance_from_us_km* qui contient la distance entre l'épicentre du séisme et Orthez
 
 J'ai ici utilisé la librairie **pymongo** de python mais j'aurais pu utiliser un **MongoHook** spécifique à Airflow.
 
