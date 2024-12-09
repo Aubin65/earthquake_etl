@@ -10,16 +10,16 @@ Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.
 
 * Un [environnement virtuel](https://docs.python.org/3/library/venv.html)
 * Une configuration [Apache Airflow](https://airflow.apache.org/)
-  * Cela implique la configuration du fichier airflow.cfg comme décrit dans le [script de chargement des variables d'environnement](https://github.com/Aubin65/earthquake_etl/blob/main/load_environment_variables/load_environment_variables.py)
+  * Cela implique la configuration du fichier airflow.cfg comme décrit dans le [script de chargement des variables d'environnement](https://github.com/Aubin65/earthquake_etl_airflow/blob/main/load_environment_variables/load_environment_variables.py)
 * Une configuration [MongoDB](https://www.mongodb.com/)
 * Une configuration de mail (Outlook ici mais fonctionne avec d'autres services)
 
 ## Structure :
 
 Le projet est, comme précédemment décrit, structuré en deux DAGs (workflows) :
-* Un [DAG d'ETL](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/etl.py)
-* Un [DAG de purge](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/purge.py)
-* Un [DAG d'alerte](https://github.com/Aubin65/earthquake_etl/blob/main/DAGs/alerting.py)
+* Un [DAG d'ETL](https://github.com/Aubin65/earthquake_etl_airflow/blob/main/DAGs/etl.py)
+* Un [DAG de purge](https://github.com/Aubin65/earthquake_etl_airflow/blob/main/DAGs/purge.py)
+* Un [DAG d'alerte](https://github.com/Aubin65/earthquake_etl_airflow/blob/main/DAGs/alerting.py)
 
 ## ETL :
 
@@ -76,7 +76,7 @@ SMTP_RECIPIENTS=recipient1@mail.com,recipient2@mail.com
 
 ## Visualisation :
 
-Il existe dans le répertoire [streamlit](https://github.com/Aubin65/earthquake_etl/tree/main/streamlit) un [fichier](https://github.com/Aubin65/earthquake_etl/blob/main/streamlit/streamlit.py) qui permet de visualiser ces tremblements de terre en fonction de leur magnitude. 
+Il existe dans le répertoire [streamlit](https://github.com/Aubin65/earthquake_etl_airflow/tree/main/streamlit) un [fichier](https://github.com/Aubin65/earthquake_etl_airflow/blob/main/streamlit/streamlit.py) qui permet de visualiser ces tremblements de terre en fonction de leur magnitude. 
 
 Pour lancer ce fichier, il faut se placer dans son répertoire et lancer la ligne de code suivante : 
 
@@ -84,7 +84,7 @@ Pour lancer ce fichier, il faut se placer dans son répertoire et lancer la lign
 streamlit run streamlit.py
 ```
 
-Ce [dossier](https://github.com/Aubin65/earthquake_etl/tree/main/streamlit) contient les fonctions permettant la créations des visuels streamlit grâce aux librairies pandas et plotly. 
+Ce [dossier](https://github.com/Aubin65/earthquake_etl_airflow/tree/main/streamlit) contient les fonctions permettant la créations des visuels streamlit grâce aux librairies pandas et plotly. 
 
 L'affichage est lui aussi divisé en deux parties : 
 * Une partie concernant les tremblements de terre ayant eu lieu durant les 24 dernières heures avec filtre sur la magnitude
