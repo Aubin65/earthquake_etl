@@ -1,4 +1,4 @@
-# Projet d'ETL via l'API d'enregistrement des tremblements de terre
+# Projet d'ETL via l'API d'enregistrement des tremblements de terre - Version Airflow
 
 ![Earthquake](images/earthquake.png)
 
