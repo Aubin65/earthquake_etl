@@ -23,9 +23,9 @@ default_args = {"owner": "airflow", "retries": 0}
     start_date=pendulum.today("UTC").add(days=-1),
     max_active_runs=1,  # Ici on définit ce paramètre à 1 pour empêcher les doublons d'exécution de ce DAG
     catchup=False,
-    tags=["earthquake_dag"],
+    tags=["earthquake_dag_mongo"],
 )
-def earthquake_etl():
+def earthquake_etl_mongo():
     """DAG global d'import des données des tremblement de terre depuis le fichier csv des données brutes vers la base de données MongoDB"""
 
     @task
@@ -176,4 +176,4 @@ def earthquake_etl():
 
 
 # Lancement du DAG général
-earthquake_etl()
+earthquake_etl_mongo()
