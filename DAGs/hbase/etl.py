@@ -6,8 +6,7 @@ Ce fichier est utilisé pour mettre en place l'ETL grâce à Apache Airflow
 from airflow.decorators import dag, task
 from airflow.exceptions import AirflowException
 import pendulum
-import pymongo
-import pymongo.collection
+import happybase  # noqa
 import requests
 from datetime import datetime, timezone
 from geopy.distance import geodesic
@@ -23,16 +22,16 @@ default_args = {"owner": "airflow", "retries": 0}
     start_date=pendulum.today("UTC").add(days=-1),
     max_active_runs=1,  # Ici on définit ce paramètre à 1 pour empêcher les doublons d'exécution de ce DAG
     catchup=False,
-    tags=["earthquake_dag"],
+    tags=["earthquake_dag_hbase"],
 )
-def earthquake_etl():
-    """DAG global d'import des données des tremblement de terre depuis le fichier csv des données brutes vers la base de données MongoDB"""
+def earthquake_etl_hbase():
+    """DAG global d'import des données des tremblement de terre depuis le fichier csv des données brutes vers la base de données HBase"""
 
     @task
     def extract(
-        client: str = "mongodb://localhost:27017/",
-        db: str = "earthquake_db",
-        collection: str = "earthquakes",
+        host: str = "localhost",
+        port: int = 9090,
+        table: str = "earthquakes",
         request: str = "https://earthquake.usgs.gov/fdsnws/event/1/query?",
         format: str = "geojson",
         starttime: pendulum.datetime = pendulum.now("UTC").add(days=-1).strftime("%Y-%m-%dT%H:%M:%S"),
@@ -47,12 +46,12 @@ def earthquake_etl():
             format de la réponse attendu, by default "geojson"
         starttime : str, optional
             paramètre de la requête, by default "2024-11-01"
-        client : str
-            client de la base de données, by default "mongodb://localhost:27017/"
-        db : str
-            nom de la base de données, by default "earthquake_db"
-        collection : str
-            nom de la collection, by default "earthquakes"
+        host : str
+            host de la base de données, by default "localhost"
+        port : int
+            port utilisé pour la connexion à la base de données, by default 9090
+        table : str
+            table utilisée pour stocker les données, by default "earthquakes"
 
         Returns
         -------
@@ -61,19 +60,25 @@ def earthquake_etl():
         """
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
-        # Connexion à la base de données MongoDB
-        client = pymongo.MongoClient(client)
-        db = client[db]
-        collection = db[collection]
+        # Connexion à la base de données HBase
+        connection = happybase.Connection(host=host, port=port)
+
+        # Vérification de la connexion
+        connection.open()
+
+        # Connexion à la table :
+        table = connection.table(table)
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
+        # ICI METTRE LA METHODE DE RECUPERATION DE LA DERNIERE DATE AVEC HBASE
+
         # Phase de récupération de la dernière date de requête
 
-        res = collection.aggregate([{"$group": {"_id": None, "maxDate": {"$max": "$date"}}}])
+        # res = collection.aggregate([{"$group": {"_id": None, "maxDate": {"$max": "$date"}}}])
 
         # Si il n'y a aucun document, starttime est égal à celui prédéfini, sinon au max trouvé dans la collection MongoDB
-        result = next(res, None)
-        starttime = result["maxDate"] if result else starttime
+        # result = next(res, None)
+        # starttime = result["maxDate"] if result else starttime
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Requête API
@@ -82,8 +87,8 @@ def earthquake_etl():
         raw_data = requests.get(final_api_request, timeout=15).json()
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
-        # Fermeture du client MongoDB
-        client.close()
+        # Fermeture du client HBase
+        connection.close()
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Vérification de l'existence de features
@@ -157,7 +162,7 @@ def earthquake_etl():
             liste des dictionnaires correspondant à chaque enregistrement de tremblement de terre
         """
 
-        client = pymongo.MongoClient(client)
+        # client = pymongo.MongoClient(client)
         db = client[db]
         collection = db[collection]
 
@@ -176,4 +181,4 @@ def earthquake_etl():
 
 
 # Lancement du DAG général
-earthquake_etl()
+earthquake_etl_hbase()
