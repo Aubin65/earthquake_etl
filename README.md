@@ -4,7 +4,7 @@
 
 ## Contexte :
 
-Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les minutes et stockera les informations qui n'ont pas encore été stockées dans une base de donnée MongoDB locale. La fonction de purge, quant à elle, viendra automatiquement purger les données qui sont plus anciennes avec les paramètres convenus. Un troisième flow servira à alerter une liste de mails lorsque des séismes apparaissent trop proches de notre position (nous prendrons arbitrairement Orthez)
+Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain afin de tester l'aspect planification d'Apache Airflow. En effet, l'ETL viendra requêter l'API toutes les minutes et stockera les informations qui n'ont pas encore été stockées dans une base de donnée locale (MongoDB, HBase ou Cassandra). La fonction de purge, quant à elle, viendra automatiquement purger les données qui sont plus anciennes avec les paramètres convenus. Un troisième flow servira à alerter une liste de mails lorsque des séismes apparaissent trop proches de notre position (nous prendrons arbitrairement Orthez)
 
 ## Prérequis :
 
@@ -19,16 +19,22 @@ Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.
 
 ## Structure :
 
-Le projet est, comme précédemment décrit, structuré en deux DAGs (workflows) :
-* Un [DAG d'ETL](https://github.com/Aubin65/earthquake_etl_airflow/blob/main/DAGs/etl.py)
-* Un [DAG de purge](https://github.com/Aubin65/earthquake_etl_airflow/blob/main/DAGs/purge.py)
-* Un [DAG d'alerte](https://github.com/Aubin65/earthquake_etl_airflow/blob/main/DAGs/alerting.py)
+Le projet est, comme précédemment décrit, structuré en trois DAGs (workflows) pour chaque type de bases de données :
+* Un DAG d'ETL
+* Un DAG de purge
+* Un DAG d'alerte
 
 ## ETL :
 
 Comme décrit précédemment, l'ETL va venir requêter l'[API](https://earthquake.usgs.gov/fdsnws/event/1/) du gouverment américain pour récupérer les données dont nous avons besoin.
 
-Les données sont stockées sous la forme suivante dans la base de données MongoDB :
+Les transformations effectuées sont :
+* Une sélection spécifique des données
+* Un changement du format de la date : timestamp -> UTC
+* Une séparation des différents composants de la géolocalisation
+* L'ajout de l'attribut *distance_from_us_km* qui contient la distance entre l'épicentre du séisme et Orthez
+
+Dans le cas de la base de données **MongoDB**, les données sont stockées de la manière suivante :
 
 ```json
 {
@@ -49,13 +55,11 @@ Les données sont stockées sous la forme suivante dans la base de données Mong
 }
 ```
 
-Les seules transformations effectuées sont :
-* Une sélection spécifique des données
-* Un changement du format de la date : timestamp -> UTC
-* Une séparation des différents composants de la géolocalisation
-* L'ajout de l'attribut *distance_from_us_km* qui contient la distance entre l'épicentre du séisme et Orthez
+Dans ce cas spécifique, j'ai décidé d'utiliser la librairie **pymongo** de python mais j'aurais pu choisir un **MongoHook** spécifique à Airflow.
 
-J'ai ici utilisé la librairie **pymongo** de python mais j'aurais pu utiliser un **MongoHook** spécifique à Airflow.
+Dans le cas de la base de données **HBase**, les données sont stockées de la manière suivante : 
+
+Dans le cas de la base de données **Cassandra**, les données sont stockées de la manière suivante :
 
 ## Purge :
 
@@ -67,7 +71,7 @@ La visée de ce projet est d'avoir une base de données recueillant seulement le
 
 Le troisième DAG a été mis en place pour alerter les personnes concernées lorsqu'un séisme a eu lieu lors des dernières 24 heures. Le DAG vient récupérer les enregistrements plus proches que la distance minimale déclarée (5000 km par défaut) puis envoie un mail avec leur contenu aux personnes déclarées dans le fichier *.env*.
 
-Pour que ce DAG fonctionne, il faut donc créer ce fichier *.env* avec un contenu de la forme suivante : 
+Pour que ce DAG fonctionne, il faut configurer ce fichier *.env* de la façon suivante : 
 
 ```
 SMTP_HOST=smtp.office365.com
