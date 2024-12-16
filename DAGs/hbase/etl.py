@@ -10,7 +10,7 @@ import happybase  # noqa
 import requests
 from datetime import datetime, timezone
 from geopy.distance import geodesic
-from encoding_functions import var_to_bytes
+from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import var_to_bytes
 
 # DAG de base
 default_args = {"owner": "airflow", "retries": 0}
