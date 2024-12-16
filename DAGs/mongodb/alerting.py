@@ -76,6 +76,9 @@ def alerting_dag():
         for record in cursor:
             res.append(record)
 
+        # Fermeture du client
+        client.close()
+
         # On retourne la liste des résultats
         return res
 
