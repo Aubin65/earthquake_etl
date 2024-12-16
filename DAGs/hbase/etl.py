@@ -37,27 +37,32 @@ def earthquake_etl_hbase():
         format: str = "geojson",
         starttime: pendulum.datetime = pendulum.now("UTC").add(days=-1).strftime("%Y-%m-%dT%H:%M:%S"),
     ) -> dict:
-        """Tâche d'extraction de la donnée depuis l'API
+        """Fonction d'extraction de la donnée
 
         Parameters
         ----------
-        request : _type_, optional
-            corps de la requête à l'API, by default "https://earthquake.usgs.gov/fdsnws/event/1/query?"
-        format : str, optional
-            format de la réponse attendu, by default "geojson"
-        starttime : str, optional
-            paramètre de la requête, by default "2024-11-01"
-        host : str
-            host de la base de données, by default "localhost"
-        port : int
-            port utilisé pour la connexion à la base de données, by default 9090
-        table : str
+        host : str, optional
+            hote de la bdd HBase, by default "localhost"
+        port : int, optional
+            port utilisé par la bdd HBase, by default 9090
+        table : str, optional
             table utilisée pour stocker les données, by default "earthquakes"
+        request : _type_, optional
+            corps de base de la requête API, by default "https://earthquake.usgs.gov/fdsnws/event/1/query?"
+        format : str, optional
+            format de la réponse, by default "geojson"
+        starttime : _type_, optional
+            date de début par défaut, by default pendulum.now("UTC").add(days=-1).strftime("%Y-%m-%dT%H:%M:%S")
 
         Returns
         -------
         dict
-            dictionnaire contenant les résultats de la requête API
+            données brutes
+
+        Raises
+        ------
+        AirflowException
+            exception de stop du DAG si il n'y a pas de nouvel enregistrement
         """
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
@@ -71,20 +76,17 @@ def earthquake_etl_hbase():
         table = connection.table(table)
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
+        # Récupération de la date la plus récente
 
-        # Initialisation du nom de la colonne dans laquelle la date est stockée
-        date_column = b"general_info:date"
+        # Si la table n'est pas vide, on assigne la dernière date à la variable starttime
+        if table.count() > 0:
 
-        # Initialisation de la liste des dates du tableau
-        dates_list = []  # noqa
+            # Itération sur la table
+            for key, data in table.scan(limit=1):
 
-        # Itération sur la table
-        for key, data in table.scan():
-            if date_column in data:
+                # Récupération de la date (pas de prise en compte des doublons qui interviennent juste dans la row key)
+                starttime = data[b"general:date"].decode("utf-8")
 
-                # Récupération de la date
-                date = data[date_column].decode("utf-8")  # noqa
-                pass  # TODO: Compléter cela
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Requête API
         final_api_request = f"{request}format={format}&starttime={starttime}"
@@ -123,13 +125,27 @@ def earthquake_etl_hbase():
         # Initialisation de la liste contenant les séismes
         earthquakes_list = []
 
+        # Initialisation de la liste des clés en cas de doublons
+        keys = []
+
         for feature in raw_data["features"]:
 
             # Ajout des coordonnées du séisme dans un tuple pour calculer la distance
             point = (feature["geometry"]["coordinates"][1], feature["geometry"]["coordinates"][0])
 
             # Initialisation de la key row pour insérer dans HBase
-            key = str((1 / (feature["properties"]["time"] / 1000).timestamp()) * 1e12).split(".")[-1].encode("utf-8")
+            key = str((1 / (feature["properties"]["time"] / 1000).timestamp()) * 1e12).split(".")[-1]
+
+            # Gestion des doublons de row key
+            i = 1
+            while key in keys:
+                key += " - " + str(i)
+                i += 1
+
+            keys.append(key)
+
+            # Encodage de la clé en byte
+            key.encode("utf-8")
 
             # Création du dictionnaire temporaire
             # On convertit les int et float en byte au format compact
@@ -185,8 +201,10 @@ def earthquake_etl_hbase():
 
         # Condition sur la taille du batch
         if split_batch:
+
             # Initialisation du batch
             with table.batch(batch_size=batch_size) as batch:
+
                 # Itération sur chaque enregistrement
                 for record in earthquakes_list:
 
@@ -196,8 +214,10 @@ def earthquake_etl_hbase():
                     batch.put(key, data)
 
         else:
+
             # Initialisation du batch
             with table.batch() as batch:
+
                 # Itération sur chaque enregistrement
                 for record in earthquakes_list:
 
