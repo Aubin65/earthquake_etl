@@ -3,12 +3,9 @@ Ce fichier est utilisé pour mettre en place la purge de la base de données des
 """
 
 # Import des librairies nécessaires
-from airflow.decorators import dag, task  # noqa
-from airflow.exceptions import AirflowException  # noqa
-import pymongo  # noqa
-import pymongo.collection  # noqa
-import requests  # noqa
-from datetime import datetime, timezone  # noqa
+from airflow.decorators import dag, task
+from datetime import datetime
+import happybase
 import pendulum
 
 # DAG de base
@@ -31,7 +28,9 @@ def purge_earthquake_db():
 
     @task
     def purge(
-        client: str = "mongodb://localhost:27017/", db: str = "earthquake_db", collection: str = "earthquakes"
+        host: str = "localhost",
+        port: int = 9090,
+        table: str = "earthquakes",
     ) -> None:
         """Fonction de purge de la base de données earthquake pour les données plus anciennes qu'un jour
 
@@ -45,19 +44,28 @@ def purge_earthquake_db():
             nom de la collection dans la base de données MongoDB, by default "earthquakes"
         """
 
-        # Connexion à la base de données MongoDB
-        client = pymongo.MongoClient(client)
-        db = client[db]
-        collection = db[collection]
+        # Connexion à la base de données HBase
+        connection = happybase.Connection(host=host, port=port)
+
+        # Vérification de la connexion
+        connection.open()
+
+        # Connexion à la table :
+        table = connection.table(table)
 
         # Récupération de la date de la veille
-        yesterday = pendulum.now("UTC").add(days=-1).strftime("%Y-%m-%dT%H:%M:%S")
+        yesterday = pendulum.now("UTC").add(days=-1)
 
-        # Requête permettant de récupérer les enregistrements plus anciens qu'un jour avant
-        myquery = {"date": {"$lte": f"{yesterday}"}}
+        for row_key, data in table.scan():
 
-        # Suppression de ces enregistrements
-        collection.delete_many(myquery)
+            date = datetime.strptime(data[b"general:date"].decode("utf-8"), "%Y-%m-%dT%H:%M:%S")
+
+            if date < yesterday:
+
+                table.delete(row_key)
+
+        # Fermeture du client HBase
+        connection.close()
 
     purge()
 
