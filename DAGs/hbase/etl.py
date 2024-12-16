@@ -12,6 +12,33 @@ from datetime import datetime, timezone
 from geopy.distance import geodesic
 import struct
 
+# Définition de la fonction encode qui permettre d'encoder plus facilement les données :
+
+
+def var_to_bytes(var) -> bytes:
+    """Permet d'encoder une variable du type str, int ou float
+
+    Parameters
+    ----------
+    var : _type_
+        variable d'entrée de la fonction
+
+    Returns
+    -------
+    bytes
+        variable encodée
+    """
+
+    if isinstance(var, str):
+        return var.encode("utf-8")
+
+    if isinstance(var, int):
+        return struct.pack(">i", var)
+
+    if isinstance(var, float):
+        return struct.pack("f", var)
+
+
 # DAG de base
 default_args = {"owner": "airflow", "retries": 0}
 
@@ -150,25 +177,28 @@ def earthquake_etl_hbase():
             # Création du dictionnaire temporaire
             # On convertit les int et float en byte au format compact
             temp_dict = {
-                b"stats:magType": {feature["properties"]["magType"]}.encode("utf-8"),
-                b"stats:mag": struct.pack("f", feature["properties"]["mag"]),
-                b"general:place": feature["properties"]["place"].encode("utf-8"),
-                b"general:date": datetime.fromtimestamp(feature["properties"]["time"] / 1000, timezone.utc)
-                .strftime("%Y-%m-%dT%H:%M:%S")
-                .encode("utf-8"),
-                b"general:type": feature["properties"]["type"].encode("utf-8"),
-                b"stats:nst": struct.pack(">i", feature["properties"]["nst"]),
-                b"stats:dmin": struct.pack("f", feature["properties"]["dmin"]),
-                b"stats:sig": struct.pack(">i", feature["properties"]["sig"]),
-                b"coordinates:geometryType": feature["geometry"]["type"].encode("utf-8"),
-                b"coordinates:longitude": struct.pack("f", point[1]),
-                b"coordinates:latitude": struct.pack("f", point[0]),
-                b"coordinates:depth": struct.pack("f", feature["geometry"]["coordinates"][2]),
-                b"stats:distance_from_us_km": struct.pack("f", round(geodesic(point, own_position).kilometers, 2)),
+                b"stats:magType": feature["properties"]["magType"],
+                b"stats:mag": feature["properties"]["mag"],
+                b"general:place": feature["properties"]["place"],
+                b"general:date": datetime.fromtimestamp(feature["properties"]["time"] / 1000, timezone.utc).strftime(
+                    "%Y-%m-%dT%H:%M:%S"
+                ),
+                b"general:type": feature["properties"]["type"],
+                b"stats:nst": feature["properties"]["nst"],
+                b"stats:dmin": feature["properties"]["dmin"],
+                b"stats:sig": feature["properties"]["sig"],
+                b"coordinates:geometryType": feature["geometry"]["type"],
+                b"coordinates:longitude": point[1],
+                b"coordinates:latitude": point[0],
+                b"coordinates:depth": feature["geometry"]["coordinates"][2],
+                b"stats:distance_from_us_km": round(geodesic(point, own_position).kilometers, 2),
             }
 
+            # Encodage du dictionnaire
+            encoded_dict = {key: var_to_bytes(elem) for key, elem in temp_dict.items()}
+
             # Ajout à la liste finale
-            earthquakes_list.append((key, temp_dict))
+            earthquakes_list.append((key, encoded_dict))
 
         return earthquakes_list
 
