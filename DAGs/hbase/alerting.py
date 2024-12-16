@@ -13,7 +13,10 @@ import os
 from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import bytes_to_var
 
 # DAG de base
-default_args = {"owner": "airflow", "retries": 0}
+default_args = {
+    "owner": "airflow",
+    "retries": 0,
+}
 
 
 # Définition des fonctions de DAG
