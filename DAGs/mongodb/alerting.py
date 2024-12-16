@@ -202,9 +202,9 @@ Aubin Morlas"
             subject = "MAJ Situation tremblements de terre"
             to_email = "habitants@ville_orthez.com"
             body = "Bonjour, ceci est un email envoyé automatiquement à l'aide de Python.\n\
-            Il est écrit pour vous prévenir qu'aucun tremblement de terre n'a été recensé proche d'Orthez depuis hier.\
-            Bien cordialement,\
-                Aubin Morlas"
+Il est écrit pour vous prévenir qu'aucun tremblement de terre n'a été recensé proche d'Orthez depuis hier.\n\
+Bien cordialement,\n\
+Aubin Morlas"
 
             msg = MIMEText(body, "plain")
             msg["Subject"] = subject
