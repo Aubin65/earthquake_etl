@@ -59,6 +59,9 @@ def purge_earthquake_db():
         # Suppression de ces enregistrements
         collection.delete_many(myquery)
 
+        # Fermeture du client
+        client.close()
+
     purge()
 
 
