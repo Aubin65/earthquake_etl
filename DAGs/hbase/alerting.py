@@ -5,8 +5,7 @@ Ce script est utilisé pour alerter un utilisateur lorsqu'un tremblement de terr
 # Import des librairies nécessaires
 from airflow.decorators import dag, task
 import pendulum
-import pymongo
-import pymongo.collection
+import happybase
 from dotenv import load_dotenv  # noqa
 from email.mime.text import MIMEText
 import smtplib
@@ -35,46 +34,50 @@ def alerting_dag():
 
     @task
     def get_close_earthquakes(
-        client: str = "mongodb://localhost:27017/",
-        db: str = "earthquake_db",
-        collection: str = "earthquakes",
+        host: str = "localhost",
+        port: int = 9090,
+        table: str = "earthquakes",
         dist_min: int = 5000,
     ) -> list[dict]:
-        """Fonction d'extraction des données sur les tremblements de terre
+        """Récupération des tremblements de terre les plus proches
 
         Parameters
         ----------
-        client : str
-            client de la base de données, by default "mongodb://localhost:27017/"
-        db : str
-            nom de la base de données, by default "earthquake_db"
-        collection : str
-            nom de la collection, by default "earthquakes"
+        host : str, optional
+            hôte de la bdd HBase, by default "localhost"
+        port : int, optional
+            port utilisé par HBase, by default 9090
+        table : str, optional
+            table contenant les données sur les tremblements de terre, by default "earthquakes"
         dist_min : int, optional
-            distance minimale pour l'alerting, by default 5000
+            distance minimale que va recueillir le scan, by default 5000
 
         Returns
         -------
         list[dict]
-            liste comprenant les enregistrements suffisamment proches pour devoir alerter par mail
+            liste des enregistrements
         """
 
         # Initialisation de la liste finale des enregistrements
         res = []
 
-        # Connexion à la base de données MongoDB
-        client = pymongo.MongoClient(client)
-        db = client[db]
-        collection = db[collection]
+        # Connexion à la base de données HBase
+        connection = happybase.Connection(host=host, port=port)
+
+        # Vérification de la connexion
+        connection.open()
+
+        # Connexion à la table :
+        table = connection.table(table)
 
         # Requête permettant de récupérer les enregistrements plus proches que la distance minimale
-        query = {"distance_from_us_km": {"$lte": dist_min}}
-        projection = {"_id": 0}
+        filter = f"SingleColumnValueFilter('stats', 'distance_from_us_km', >, 'binary:{dist_min}')"
 
-        cursor = collection.find(query, projection)
+        for key, data in table.scan(filter=filter):
+            pass
 
-        for record in cursor:
-            res.append(record)
+        # Fermeture du client
+        connection.close()
 
         # On retourne la liste des résultats
         return res
