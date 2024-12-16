@@ -10,34 +10,7 @@ import happybase  # noqa
 import requests
 from datetime import datetime, timezone
 from geopy.distance import geodesic
-import struct
-
-# Définition de la fonction encode qui permettre d'encoder plus facilement les données :
-
-
-def var_to_bytes(var) -> bytes:
-    """Permet d'encoder une variable du type str, int ou float
-
-    Parameters
-    ----------
-    var : _type_
-        variable d'entrée de la fonction
-
-    Returns
-    -------
-    bytes
-        variable encodée
-    """
-
-    if isinstance(var, str):
-        return var.encode("utf-8")
-
-    if isinstance(var, int):
-        return struct.pack(">i", var)
-
-    if isinstance(var, float):
-        return struct.pack("f", var)
-
+from encoding_functions import var_to_bytes
 
 # DAG de base
 default_args = {"owner": "airflow", "retries": 0}
