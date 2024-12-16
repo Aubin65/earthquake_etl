@@ -10,7 +10,7 @@ from dotenv import load_dotenv
 from email.mime.text import MIMEText
 import smtplib
 import os
-from encoding_functions import bytes_to_var
+from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import bytes_to_var
 
 # DAG de base
 default_args = {"owner": "airflow", "retries": 0}
