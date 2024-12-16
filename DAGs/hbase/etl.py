@@ -109,7 +109,7 @@ def earthquake_etl_hbase():
         if table.count() > 0:
 
             # Itération sur la table
-            for key, data in table.scan(limit=1):
+            for _, data in table.scan(limit=1):
 
                 # Récupération de la date (pas de prise en compte des doublons qui interviennent juste dans la row key)
                 starttime = data[b"general:date"].decode("utf-8")
@@ -255,6 +255,9 @@ def earthquake_etl_hbase():
                     key, data = record
                     # Insertion des données
                     batch.put(key, data)
+
+        # Fermeture du client HBase
+        connection.close()
 
         print("Données chargées avec succès")
 
