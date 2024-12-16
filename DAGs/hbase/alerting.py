@@ -6,10 +6,11 @@ Ce script est utilisé pour alerter un utilisateur lorsqu'un tremblement de terr
 from airflow.decorators import dag, task
 import pendulum
 import happybase
-from dotenv import load_dotenv  # noqa
+from dotenv import load_dotenv
 from email.mime.text import MIMEText
 import smtplib
-import os  # noqa
+import os
+from encoding_functions import bytes_to_var
 
 # DAG de base
 default_args = {"owner": "airflow", "retries": 0}
@@ -73,8 +74,11 @@ def alerting_dag():
         # Requête permettant de récupérer les enregistrements plus proches que la distance minimale
         filter = f"SingleColumnValueFilter('stats', 'distance_from_us_km', >, 'binary:{dist_min}')"
 
-        for key, data in table.scan(filter=filter):
-            pass
+        for _, data in table.scan(filter=filter):
+
+            decoded_dict = {key: bytes_to_var(elem) for key, elem in data.items()}
+
+            res.append(decoded_dict)
 
         # Fermeture du client
         connection.close()
