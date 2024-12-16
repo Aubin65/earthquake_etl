@@ -192,7 +192,6 @@ def earthquake_etl_hbase():
             liste des dictionnaires correspondant à chaque enregistrement de tremblement de terre
         """
 
-        # client = pymongo.MongoClient(client)
         # Connexion à la base de données HBase
         connection = happybase.Connection(host=host, port=port)
 
