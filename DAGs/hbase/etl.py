@@ -6,7 +6,7 @@ Ce fichier est utilisé pour mettre en place l'ETL grâce à Apache Airflow
 from airflow.decorators import dag, task
 from airflow.exceptions import AirflowException
 import pendulum
-import happybase  # noqa
+import happybase
 import requests
 from datetime import datetime, timezone
 from geopy.distance import geodesic
