@@ -10,6 +10,7 @@ import happybase  # noqa
 import requests
 from datetime import datetime, timezone
 from geopy.distance import geodesic
+import struct
 
 # DAG de base
 default_args = {"owner": "airflow", "retries": 0}
@@ -70,16 +71,20 @@ def earthquake_etl_hbase():
         table = connection.table(table)
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
-        # ICI METTRE LA METHODE DE RECUPERATION DE LA DERNIERE DATE AVEC HBASE
 
-        # Phase de récupération de la dernière date de requête
+        # Initialisation du nom de la colonne dans laquelle la date est stockée
+        date_column = b"general_info:date"
 
-        # res = collection.aggregate([{"$group": {"_id": None, "maxDate": {"$max": "$date"}}}])
+        # Initialisation de la liste des dates du tableau
+        dates_list = []  # noqa
 
-        # Si il n'y a aucun document, starttime est égal à celui prédéfini, sinon au max trouvé dans la collection MongoDB
-        # result = next(res, None)
-        # starttime = result["maxDate"] if result else starttime
+        # Itération sur la table
+        for key, data in table.scan():
+            if date_column in data:
 
+                # Récupération de la date
+                date = data[date_column].decode("utf-8")  # noqa
+                pass  # TODO: Compléter cela
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Requête API
         final_api_request = f"{request}format={format}&starttime={starttime}"
@@ -115,44 +120,50 @@ def earthquake_etl_hbase():
             liste des éléments à stocker au bon format
         """
 
+        # Initialisation de la liste contenant les séismes
         earthquakes_list = []
 
         for feature in raw_data["features"]:
 
+            # Ajout des coordonnées du séisme dans un tuple pour calculer la distance
             point = (feature["geometry"]["coordinates"][1], feature["geometry"]["coordinates"][0])
 
+            # Initialisation de la key row pour insérer dans HBase
+            key = str((1 / (feature["properties"]["time"] / 1000).timestamp()) * 1e12).split(".")[-1].encode("utf-8")
+
             # Création du dictionnaire temporaire
+            # On convertit les int et float en byte au format compact
             temp_dict = {
-                "mag": feature["properties"]["mag"],
-                "place": feature["properties"]["place"],
-                "date": datetime.fromtimestamp(feature["properties"]["time"] / 1000, timezone.utc).strftime(
-                    "%Y-%m-%dT%H:%M:%S"
-                ),
-                # "time": feature["properties"]["time"],
-                "type": feature["properties"]["type"],
-                "nst": feature["properties"]["nst"],
-                "dmin": feature["properties"]["dmin"],
-                "sig": feature["properties"]["sig"],
-                "magType": feature["properties"]["magType"],
-                "geometryType": feature["geometry"]["type"],
-                # "coordinates": feature["geometry"]["coordinates"],
-                "longitude": point[1],
-                "latitude": point[0],
-                "depth": feature["geometry"]["coordinates"][2],
-                "distance_from_us_km": round(geodesic(point, own_position).kilometers, 2),
+                b"stats:magType": {feature["properties"]["magType"]}.encode("utf-8"),
+                b"stats:mag": struct.pack("f", feature["properties"]["mag"]),
+                b"general:place": feature["properties"]["place"].encode("utf-8"),
+                b"general:date": datetime.fromtimestamp(feature["properties"]["time"] / 1000, timezone.utc)
+                .strftime("%Y-%m-%dT%H:%M:%S")
+                .encode("utf-8"),
+                b"general:type": feature["properties"]["type"].encode("utf-8"),
+                b"stats:nst": struct.pack(">i", feature["properties"]["nst"]),
+                b"stats:dmin": struct.pack("f", feature["properties"]["dmin"]),
+                b"stats:sig": struct.pack(">i", feature["properties"]["sig"]),
+                b"coordinates:geometryType": feature["geometry"]["type"].encode("utf-8"),
+                b"coordinates:longitude": struct.pack("f", point[1]),
+                b"coordinates:latitude": struct.pack("f", point[0]),
+                b"coordinates:depth": struct.pack("f", feature["geometry"]["coordinates"][2]),
+                b"stats:distance_from_us_km": struct.pack("f", round(geodesic(point, own_position).kilometers, 2)),
             }
 
             # Ajout à la liste finale
-            earthquakes_list.append(temp_dict)
+            earthquakes_list.append((key, temp_dict))
 
         return earthquakes_list
 
     @task
     def load(
         earthquakes_list: list,
-        client: str = "mongodb://localhost:27017/",
-        db: str = "earthquake_db",
-        collection: str = "earthquakes",
+        host: str = "localhost",
+        port: int = 9090,
+        table: str = "earthquakes",
+        batch_size: int = 1000,
+        split_batch: bool = False,
     ) -> None:
         """Tâche de chargement des données dans la base de données MongoDB
 
@@ -163,12 +174,39 @@ def earthquake_etl_hbase():
         """
 
         # client = pymongo.MongoClient(client)
-        db = client[db]
-        collection = db[collection]
+        # Connexion à la base de données HBase
+        connection = happybase.Connection(host=host, port=port)
 
-        collection.insert_many(earthquakes_list)
+        # Vérification de la connexion
+        connection.open()
 
-        client.close()
+        # Connexion à la table :
+        table = connection.table(table)
+
+        # Condition sur la taille du batch
+        if split_batch:
+            # Initialisation du batch
+            with table.batch(batch_size=batch_size) as batch:
+                # Itération sur chaque enregistrement
+                for record in earthquakes_list:
+
+                    # Récupération de la row key et de la donnée correspondante
+                    key, data = record
+                    # Insertion des données
+                    batch.put(key, data)
+
+        else:
+            # Initialisation du batch
+            with table.batch() as batch:
+                # Itération sur chaque enregistrement
+                for record in earthquakes_list:
+
+                    # Récupération de la row key et de la donnée correspondante
+                    key, data = record
+                    # Insertion des données
+                    batch.put(key, data)
+
+        print("Données chargées avec succès")
 
     # Extraction des données brutes
     raw_dict = extract()
