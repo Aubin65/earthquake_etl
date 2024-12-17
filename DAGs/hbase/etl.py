@@ -153,25 +153,25 @@ def earthquake_etl_hbase():
             # Création du dictionnaire temporaire
             # On convertit les int et float en byte au format compact
             temp_dict = {
-                b"stats:magType": feature["properties"]["magType"],
-                b"stats:mag": feature["properties"]["mag"],
-                b"general:place": feature["properties"]["place"],
-                b"general:date": datetime.fromtimestamp(feature["properties"]["time"] / 1000, timezone.utc).strftime(
+                "stats:magType": feature["properties"]["magType"],
+                "stats:mag": feature["properties"]["mag"],
+                "general:place": feature["properties"]["place"],
+                "general:date": datetime.fromtimestamp(feature["properties"]["time"] / 1000, timezone.utc).strftime(
                     "%Y-%m-%dT%H:%M:%S"
                 ),
-                b"general:type": feature["properties"]["type"],
-                b"stats:nst": feature["properties"]["nst"],
-                b"stats:dmin": feature["properties"]["dmin"],
-                b"stats:sig": feature["properties"]["sig"],
-                b"coordinates:geometryType": feature["geometry"]["type"],
-                b"coordinates:longitude": point[1],
-                b"coordinates:latitude": point[0],
-                b"coordinates:depth": feature["geometry"]["coordinates"][2],
-                b"stats:distance_from_us_km": round(geodesic(point, own_position).kilometers, 2),
+                "general:type": feature["properties"]["type"],
+                "stats:nst": feature["properties"]["nst"],
+                "stats:dmin": feature["properties"]["dmin"],
+                "stats:sig": feature["properties"]["sig"],
+                "coordinates:geometryType": feature["geometry"]["type"],
+                "coordinates:longitude": point[1],
+                "coordinates:latitude": point[0],
+                "coordinates:depth": feature["geometry"]["coordinates"][2],
+                "stats:distance_from_us_km": round(geodesic(point, own_position).kilometers, 2),
             }
 
             # Encodage du dictionnaire
-            encoded_dict = {key: var_to_bytes(elem) for key, elem in temp_dict.items()}
+            encoded_dict = {key.encode("ascii"): var_to_bytes(elem) for key, elem in temp_dict.items()}
 
             # Ajout à la liste finale
             earthquakes_list.append((key, encoded_dict))
