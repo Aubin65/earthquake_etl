@@ -7,10 +7,10 @@ from airflow.decorators import dag, task
 import pendulum
 import pymongo
 import pymongo.collection
-from dotenv import load_dotenv  # noqa
+from dotenv import load_dotenv
 from email.mime.text import MIMEText
 import smtplib
-import os  # noqa
+import os
 
 # DAG de base
 default_args = {"owner": "airflow", "retries": 0}
