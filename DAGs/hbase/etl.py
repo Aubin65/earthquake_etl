@@ -171,7 +171,7 @@ def earthquake_etl_hbase():
             }
 
             # Encodage du dictionnaire
-            encoded_dict = {key.encode("ascii"): var_to_bytes(elem) for key, elem in temp_dict.items()}
+            encoded_dict = {var_to_bytes(key): var_to_bytes(elem) for key, elem in temp_dict.items()}
 
             # Ajout à la liste finale
             earthquakes_list.append((key, encoded_dict))
