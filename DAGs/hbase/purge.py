@@ -57,10 +57,13 @@ def purge_earthquake_db():
         # Récupération de la date de la veille
         yesterday = pendulum.now("UTC").add(days=-1)
 
+        # On scanne toute la table pour supprimer les lignes au fur et à mesure
         for row_key, data in table.scan():
 
+            # Récupération de la date
             date = datetime.strptime(bytes_to_var(data[b"general:date"]), "%Y-%m-%dT%H:%M:%S")
 
+            # Si la date plus ancienne que 24h
             if date < yesterday:
 
                 table.delete(row_key)
