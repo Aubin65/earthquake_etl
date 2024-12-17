@@ -23,7 +23,7 @@ def var_to_bytes(var) -> bytes:
 
     # Cas d'une chaîne de caractères
     if isinstance(var, str):
-        return var.encode("utf-8")
+        return var.encode("utf-8", errors="replace")
 
     # Cas d'un entier
     if isinstance(var, int):
