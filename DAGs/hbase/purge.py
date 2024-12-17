@@ -7,6 +7,7 @@ from airflow.decorators import dag, task
 from datetime import datetime
 import happybase
 import pendulum
+from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import bytes_to_var
 
 # DAG de base
 default_args = {
@@ -58,7 +59,7 @@ def purge_earthquake_db():
 
         for row_key, data in table.scan():
 
-            date = datetime.strptime(data[b"general:date"].decode("utf-8"), "%Y-%m-%dT%H:%M:%S")
+            date = datetime.strptime(bytes_to_var(data[b"general:date"]), "%Y-%m-%dT%H:%M:%S")
 
             if date < yesterday:
 
