@@ -3,12 +3,9 @@ Ce fichier est utilisé pour mettre en place la purge de la base de données des
 """
 
 # Import des librairies nécessaires
-from airflow.decorators import dag, task  # noqa
-from airflow.exceptions import AirflowException  # noqa
-import pymongo  # noqa
-import pymongo.collection  # noqa
-import requests  # noqa
-from datetime import datetime, timezone  # noqa
+from airflow.decorators import dag, task
+import pymongo
+import pymongo.collection
 import pendulum
 
 # DAG de base
