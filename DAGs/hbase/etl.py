@@ -10,7 +10,7 @@ import happybase
 import requests
 from datetime import datetime, timezone
 from geopy.distance import geodesic
-from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import var_to_bytes
+from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import var_to_bytes, bytes_to_var
 
 # DAG de base
 default_args = {"owner": "airflow", "retries": 0}
@@ -85,7 +85,7 @@ def earthquake_etl_hbase():
             for _, data in table.scan(limit=1):
 
                 # Récupération de la date (pas de prise en compte des doublons qui interviennent juste dans la row key)
-                starttime = data[b"general:date"].decode("utf-8")
+                starttime = bytes_to_var(data[b"general:date"])
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Requête API
@@ -145,7 +145,7 @@ def earthquake_etl_hbase():
             keys.append(key)
 
             # Encodage de la clé en byte
-            key.encode("utf-8")
+            key = var_to_bytes(key)
 
             # Création du dictionnaire temporaire
             # On convertit les int et float en byte au format compact
