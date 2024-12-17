@@ -13,7 +13,10 @@ from geopy.distance import geodesic
 from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import var_to_bytes, bytes_to_var
 
 # DAG de base
-default_args = {"owner": "airflow", "retries": 0}
+default_args = {
+    "owner": "airflow",
+    "retries": 0,
+}
 
 
 # Définition des fonctions de DAG
