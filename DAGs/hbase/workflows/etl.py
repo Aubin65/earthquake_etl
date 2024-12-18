@@ -3,14 +3,14 @@ Ce fichier est utilisé pour mettre en place l'ETL grâce à Apache Airflow
 """
 
 # Import des librairies nécessaires
-from airflow.decorators import dag, task
-from airflow.exceptions import AirflowException
-import pendulum
-import happybase
-import requests
-from datetime import datetime, timezone
-from geopy.distance import geodesic
-from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import var_to_bytes, bytes_to_var
+from airflow.decorators import dag, task  # noqa
+from airflow.exceptions import AirflowException  # noqa
+import pendulum  # noqa
+import happybase  # noqa
+import requests  # noqa
+from datetime import datetime, timezone  # noqa
+from geopy.distance import geodesic  # noqa
+from hbase.useful_functions.encoding_functions import var_to_bytes, bytes_to_var  # noqa
 
 # DAG de base
 default_args = {
@@ -82,7 +82,7 @@ def earthquake_etl_hbase():
         # Récupération de la date la plus récente
 
         # Si la table n'est pas vide, on assigne la dernière date à la variable starttime
-        if table.count() > 0:
+        if sum(1 for _ in table.scan()) > 0:
 
             # Itération sur la table
             for _, data in table.scan(limit=1):
@@ -200,6 +200,22 @@ def earthquake_etl_hbase():
 
         # Vérification de la connexion
         connection.open()
+
+        # Connexion à la table :
+        if table not in connection.tables():
+            print(f"La table '{table}' n'existe pas. Création en cours...")
+
+            # Initialisation des familles
+            column_families = {
+                "stats": dict(max_versions=1),
+                "general": dict(max_versions=1),
+                "coordinates": dict(max_versions=1),
+            }
+
+            # Créer la table avec les familles de colonnes dynamiques
+            connection.create_table("earthquakes", column_families)
+
+            print(f"La table '{table}' a été créée avec succès.")
 
         # Connexion à la table :
         table = connection.table(table)
