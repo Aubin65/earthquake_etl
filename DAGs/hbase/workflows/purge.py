@@ -7,7 +7,7 @@ from airflow.decorators import dag, task
 from datetime import datetime
 import happybase
 import pendulum
-from earthquake_etl_airflow.DAGs.hbase.useful_functions.encoding_functions import bytes_to_var
+from hbase.useful_functions.encoding_functions import bytes_to_var
 
 # DAG de base
 default_args = {
