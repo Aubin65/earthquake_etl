@@ -7,7 +7,7 @@ import struct
 
 
 # Définition de la fonction encode qui permettre d'encoder plus facilement les données :
-def var_to_bytes(var) -> bytes:
+def var_to_bytes(var) -> bytes | None:
     """Permet d'encoder une variable du type str, int ou float
 
     Parameters
@@ -17,9 +17,18 @@ def var_to_bytes(var) -> bytes:
 
     Returns
     -------
-    bytes
+    bytes | None
         variable encodée
+
+    Raises
+    ------
+    TypeError
+        TypeError si la variable n'est pas du type attendu
     """
+
+    # Cas ou aucune variable n'est donnée en entrée
+    if not var:
+        return None
 
     # Cas d'une chaîne de caractères
     if isinstance(var, str):
@@ -27,7 +36,7 @@ def var_to_bytes(var) -> bytes:
 
     # Cas d'un entier
     if isinstance(var, int):
-        return struct.pack(">I", var)
+        return struct.pack(">i", var)
 
     # Cas d'un nombre décimal
     if isinstance(var, float):
@@ -35,6 +44,7 @@ def var_to_bytes(var) -> bytes:
 
     # Gestion des autres cas
     else:
+        print(f"La variable qui n'a pas pu être encodée est la suivante : {var}")
         raise TypeError("Le type de la variable fourni n'est pas attendu")
 
 
@@ -77,7 +87,7 @@ def try_decode_int(data: bytes) -> int | None:
 
     # Cas où on peut renvoyer un entier
     try:
-        return struct.unpack(">I", data)[0]
+        return struct.unpack(">i", data)[0]
 
     # Cas échéant
     except struct.error:
