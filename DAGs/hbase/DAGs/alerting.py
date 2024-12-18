@@ -26,9 +26,9 @@ default_args = {
     start_date=pendulum.today("UTC").add(days=-1),
     max_active_runs=2,
     catchup=False,
-    tags=["alerting_dag"],
+    tags=["alerting_dag_hbase"],
 )
-def alerting_dag():
+def alerting_dag_hbase():
     """
     Ce Dag est divisé en trois étapes :
         * Une étape de récupération des tremblements de terre les plus proches selon une distance minimale
@@ -236,4 +236,4 @@ Aubin Morlas"
     alert(close_earthquakes=close_earthquakes, smtp_config=smtp_config)
 
 
-alerting_dag()
+alerting_dag_hbase()
