@@ -23,9 +23,9 @@ default_args = {
     start_date=pendulum.today("UTC").add(days=-1),
     max_active_runs=1,  # Ici on définit ce paramètre à 1 pour empêcher les doublons d'exécution de ce DAG
     catchup=False,
-    tags=["purge_earthquake_db"],
+    tags=["purge_earthquake_db_hbase"],
 )
-def purge_earthquake_db():
+def purge_earthquake_db_hbase():
 
     @task
     def purge(
@@ -74,4 +74,4 @@ def purge_earthquake_db():
     purge()
 
 
-purge_earthquake_db()
+purge_earthquake_db_hbase()
