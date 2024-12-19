@@ -40,7 +40,7 @@ def var_to_bytes(var) -> bytes | None:
 
     # Cas d'un nombre décimal
     if isinstance(var, float):
-        return struct.pack("f", var)
+        return struct.pack(">f", var)
 
     # Gestion des autres cas
     else:
