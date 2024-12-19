@@ -34,6 +34,10 @@ Les transformations effectuées sont :
 * Une séparation des différents composants de la géolocalisation
 * L'ajout de l'attribut *distance_from_us_km* qui contient la distance entre l'épicentre du séisme et Orthez
 
+Ci-dessous sont répertoriées les formes de stockage des données dans chaque type de SGBD :
+
+### MongoDB : 
+
 Dans le cas de la base de données **MongoDB**, les données sont stockées de la manière suivante :
 
 ```json
@@ -57,13 +61,21 @@ Dans le cas de la base de données **MongoDB**, les données sont stockées de l
 
 Dans ce cas spécifique, j'ai décidé d'utiliser la librairie **pymongo** de python mais j'aurais pu choisir un **MongoHook** spécifique à Airflow.
 
+### HBase : 
+
 Dans le cas de la base de données **HBase**, les données sont stockées de la manière suivante : 
+
+![Output HBase](images/hbase_printing.png)
+
+Les données sont nécessairement stockées en binaire dans ce système de gestion de bases de données.
+
+### Cassandra : 
 
 Dans le cas de la base de données **Cassandra**, les données sont stockées de la manière suivante :
 
 ## Purge :
 
-L'un des défis pour ne pas surcharger ni la base de données, ni les visuels, est de ne pas récupérer l'historique des données mais seulement une journée de données. Pour cela, nous récupérons les données lorsqu'elles apparaissent, puis nous purgeons celles qui sont plus anciennes que la veille à la même heure.
+L'un des défis pour ne pas surcharger ni la base de données, ni les visuels, est de ne pas récupérer l'historique des données mais seulement une journée de données. Pour cela, nous récupérons les données lorsqu'elles apparaissent, puis nous purgeons celles qui datent de plus de 24h.
 
 La visée de ce projet est d'avoir une base de données recueillant seulement les données très récentes sur les tremblements de terre. D'autres utilisations de l'API pourraient mener à des rapports historiques concernant les statistiques collectées mais ce n'est pas le but de ce projet de test.
 
@@ -91,7 +103,7 @@ Pour lancer ce fichier, il faut se placer dans son répertoire et lancer la lign
 streamlit run streamlit.py
 ```
 
-Ce [dossier](https://github.com/Aubin65/earthquake_etl_airflow/tree/main/streamlit) contient les fonctions permettant la créations des visuels streamlit grâce aux librairies pandas et plotly. 
+Ce [dossier](https://github.com/Aubin65/earthquake_etl_airflow/tree/main/streamlit) contient les fonctions permettant la créations des visuels streamlit grâce aux librairies pandas et plotly. Pour lancer ces fonctions, j'ai choisi d'utiliser la base de données MongoDB créée comme décrit dans les parties précédentes.
 
 L'affichage est lui aussi divisé en deux parties : 
 * Une partie concernant les tremblements de terre ayant eu lieu durant les 24 dernières heures avec filtre sur la magnitude
@@ -119,3 +131,4 @@ Pour approfondir ce projet de data engineering, voici deux pistes potentielles :
 * Ajouter d'autres collections qui sont en lien avec celle déjà présente
 * Par conséquent ajouter d'autres sources de données pour complexifier la pipeline
 * Ajouter un algorithme de clustering pour essayer de retrouver les [23 plaques tectoniques](https://www.notre-planete.info/terre/risques_naturels/seismes/plaques-tectoniques.php) sachant que l'on a leur coordonnées
+* Effectuer les mêmes tests de requêtes que pour MongoDB pour les trois types de bases de données
