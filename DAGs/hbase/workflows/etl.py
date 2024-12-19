@@ -35,7 +35,7 @@ def earthquake_etl_hbase():
     def extract(
         host: str = "localhost",
         port: int = 9090,
-        table: str = "earthquakes",
+        table_name: str = "earthquakes",
         request: str = "https://earthquake.usgs.gov/fdsnws/event/1/query?",
         format: str = "geojson",
         starttime: pendulum.datetime = pendulum.now("UTC").add(days=-1).strftime("%Y-%m-%dT%H:%M:%S"),
@@ -48,7 +48,7 @@ def earthquake_etl_hbase():
             hote de la bdd HBase, by default "localhost"
         port : int, optional
             port utilisé par la bdd HBase, by default 9090
-        table : str, optional
+        table_name : str, optional
             table utilisée pour stocker les données, by default "earthquakes"
         request : _type_, optional
             corps de base de la requête API, by default "https://earthquake.usgs.gov/fdsnws/event/1/query?"
@@ -76,19 +76,20 @@ def earthquake_etl_hbase():
         connection.open()
 
         # Connexion à la table :
-        table = connection.table(table)
+        table = connection.table(table_name)
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Récupération de la date la plus récente
 
-        # Si la table n'est pas vide, on assigne la dernière date à la variable starttime
-        if sum(1 for _ in table.scan()) > 0:
+        # Si la table existe et n'est pas vide, on assigne la dernière date à la variable starttime
+        if var_to_bytes(table_name) in connection.tables():
+            if sum(1 for _ in table.scan()) > 0:
 
-            # Itération sur la table
-            for _, data in table.scan(limit=1):
+                # Itération sur la table
+                for _, data in table.scan(limit=1):
 
-                # Récupération de la date (pas de prise en compte des doublons qui interviennent juste dans la row key)
-                starttime = bytes_to_var(data[b"general:date"])
+                    # Récupération de la date (pas de prise en compte des doublons qui interviennent juste dans la row key)
+                    starttime = bytes_to_var(data[b"general:date"])
 
         # -------------------------------------------------------------------------------------------------------------------------------------------#
         # Requête API
@@ -137,7 +138,7 @@ def earthquake_etl_hbase():
             point = (feature["geometry"]["coordinates"][1], feature["geometry"]["coordinates"][0])
 
             # Initialisation de la key row pour insérer dans HBase
-            key = str((1 / (feature["properties"]["time"] / 1000).timestamp()) * 1e12).split(".")[-1]
+            key = str((1 / (feature["properties"]["time"] / 1000)) * 1e12).split(".")[-1]
 
             # Gestion des doublons de row key
             i = 1
@@ -146,9 +147,6 @@ def earthquake_etl_hbase():
                 i += 1
 
             keys.append(key)
-
-            # Encodage de la clé en byte
-            key = var_to_bytes(key)
 
             # Création du dictionnaire temporaire
             # On convertit les int et float en byte au format compact
@@ -170,11 +168,10 @@ def earthquake_etl_hbase():
                 "stats:distance_from_us_km": round(geodesic(point, own_position).kilometers, 2),
             }
 
-            # Encodage du dictionnaire
-            encoded_dict = {var_to_bytes(key): var_to_bytes(elem) for key, elem in temp_dict.items()}
+            print(f"Le dictionnaire est le suivant : {temp_dict}")
 
             # Ajout à la liste finale
-            earthquakes_list.append((key, encoded_dict))
+            earthquakes_list.append((key, temp_dict))
 
         return earthquakes_list
 
@@ -192,7 +189,7 @@ def earthquake_etl_hbase():
         Parameters
         ----------
         earthquakes_list : list
-            liste des dictionnaires correspondant à chaque enregistrement de tremblement de terre
+            liste de tuples contenant les row keys et les dictionnaires correspondant à chaque enregistrement de tremblement de terre
         """
 
         # Connexion à la base de données HBase
@@ -202,7 +199,7 @@ def earthquake_etl_hbase():
         connection.open()
 
         # Connexion à la table :
-        if table not in connection.tables():
+        if var_to_bytes(table) not in connection.tables():
             print(f"La table '{table}' n'existe pas. Création en cours...")
 
             # Initialisation des familles
@@ -231,8 +228,12 @@ def earthquake_etl_hbase():
 
                     # Récupération de la row key et de la donnée correspondante
                     key, data = record
+
+                    # Encodage du dictionnaire
+                    encoded_data = {var_to_bytes(key): var_to_bytes(elem) for key, elem in data.items()}
+
                     # Insertion des données
-                    batch.put(key, data)
+                    batch.put(key, encoded_data)
 
         else:
 
@@ -244,8 +245,12 @@ def earthquake_etl_hbase():
 
                     # Récupération de la row key et de la donnée correspondante
                     key, data = record
+
+                    # Encodage du dictionnaire
+                    encoded_data = {var_to_bytes(key): var_to_bytes(elem) for key, elem in data.items()}
+
                     # Insertion des données
-                    batch.put(key, data)
+                    batch.put(key, encoded_data)
 
         # Fermeture du client HBase
         connection.close()
