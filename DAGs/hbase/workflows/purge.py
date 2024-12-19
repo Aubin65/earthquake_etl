@@ -55,7 +55,7 @@ def purge_earthquake_db_hbase():
         table = connection.table(table)
 
         # Récupération de la date de la veille
-        yesterday = pendulum.now("UTC").add(days=-1)
+        yesterday = pendulum.now("UTC").add(days=-1).replace(tzinfo=None)
 
         # On scanne toute la table pour supprimer les lignes au fur et à mesure
         for row_key, data in table.scan():
