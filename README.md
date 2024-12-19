@@ -14,7 +14,7 @@ Pour ce mini-projet, j'ai décidé de requêter l'[API](https://earthquake.usgs.
 * Une configuration :
   * [MongoDB](https://www.mongodb.com/) pour les [DAGs MongoDB](https://github.com/Aubin65/earthquake_etl_airflow/tree/main/DAGs/mongodb)
   * [HBase](https://hbase.apache.org/) pour les [DAGs HBase](https://github.com/Aubin65/earthquake_etl_airflow/tree/main/DAGs/hbase)
-  * [Cassandra](https://cassandra.apache.org) pour les [DAGs Cassandra](https://github.com/Aubin65/earthquake_etl_airflow/tree/main/DAGs/cassandra)
+  * [Cassandra](https://cassandra.apache.org/doc/3.11/cassandra/getting_started/installing.html) pour les [DAGs Cassandra](https://github.com/Aubin65/earthquake_etl_airflow/tree/main/DAGs/cassandra)
 * Une configuration de mail (Outlook ici mais fonctionne avec d'autres services)
 
 ## Structure :
