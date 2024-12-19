@@ -79,9 +79,12 @@ def alerting_dag_hbase():
 
         for _, data in table.scan(filter=filter):
 
-            decoded_dict = {key: bytes_to_var(elem) for key, elem in data.items()}
+            # Décodage du dictionnaire car Airflow ne peut pas renvoyer des bytes via XCom
+            decoded_dict = {bytes_to_var(key): bytes_to_var(elem) for key, elem in data.items()}
 
             res.append(decoded_dict)
+
+        print(f"DICTIONNAIRE RENVOYE : {res}")
 
         # Fermeture du client
         connection.close()
@@ -148,10 +151,15 @@ def alerting_dag_hbase():
             paramètre port pour l'envoi du mail, by default 587
         """
 
+        print(f"CLOSE EARTHQUAKES : {close_earthquakes}")
+
         if len(close_earthquakes) > 1:
 
             earthquake_details = "\n".join(
-                [f"- magnitude {eq['mag']}, {eq['place']} ({eq['date']})" for eq in close_earthquakes]
+                [
+                    f"- magnitude {eq['stats:mag']}, {eq['general:place']} ({eq['general:date']})"
+                    for eq in close_earthquakes
+                ]
             )
 
             # Créer un email texte brut
@@ -179,7 +187,10 @@ Aubin Morlas"
         elif len(close_earthquakes) == 1:
 
             earthquake_details = "\n".join(
-                [f"- magnitude {eq['mag']}, {eq['place']} ({eq['date']})" for eq in close_earthquakes]
+                [
+                    f"- magnitude {eq['stats:mag']}, {eq['general:place']} ({eq['general:date']})"
+                    for eq in close_earthquakes
+                ]
             )
 
             # Créer un email texte brut
@@ -227,7 +238,7 @@ Aubin Morlas"
                 )
 
     # Récupération des enregistrements proches
-    close_earthquakes = get_close_earthquakes(dist_min=6650)
+    close_earthquakes = get_close_earthquakes(dist_min=5000)
 
     # Chargement des données d'envoi des mails
     smtp_config = load_env_var()
