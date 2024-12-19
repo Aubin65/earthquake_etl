@@ -110,7 +110,7 @@ def try_decode_str(data: bytes) -> str | None:
 
     # Cas où on peut renvoyer une chaîne de caractères
     try:
-        data.decode("utf-8")
+        return data.decode("utf-8")
 
     # Cas échéant
     except (UnicodeDecodeError, TypeError):
